@@ -48,34 +48,31 @@ public class App extends Plugin {
         String result = "";
 
         try {
-        	if (action.equals("clearCache")) {
-        		this.clearCache();
-        	}
-        	else if (action.equals("loadUrl")) {
-            	this.loadUrl(args.getString(0), args.optJSONObject(1));
+            if (action.equals("clearCache")) {
+                this.clearCache();
             }
-        	else if (action.equals("cancelLoadUrl")) {
-            	this.cancelLoadUrl();
+            else if (action.equals("loadUrl")) {
+                this.loadUrl(args.getString(0), args.optJSONObject(1));
             }
-        	else if (action.equals("clearHistory")) {
-            	this.clearHistory();
+            else if (action.equals("cancelLoadUrl")) {
+                this.cancelLoadUrl();
+            }
+            else if (action.equals("clearHistory")) {
+                this.clearHistory();
             }
             else if (action.equals("backHistory")) {
                 this.backHistory();
             }
-        	else if (action.equals("overrideBackbutton")) {
-            	this.overrideBackbutton(args.getBoolean(0));
+            else if (action.equals("overrideBackbutton")) {
+                this.overrideBackbutton(args.getBoolean(0));
             }
-        	else if (action.equals("isBackbuttonOverridden")) {
-            	boolean b = this.isBackbuttonOverridden();
-            	return new PluginResult(status, b);
+            else if (action.equals("isBackbuttonOverridden")) {
+                boolean b = this.isBackbuttonOverridden();
+                return new PluginResult(status, b);
             }
-        	else if (action.equals("exitApp")) {
-            	this.exitApp();
+            else if (action.equals("exitApp")) {
+                this.exitApp();
             }
-        	else if (action.equals("addWhiteListEntry")) {
-        		this.addWhiteListEntry(args.getString(0), args.optBoolean(1));
-        	}
             return new PluginResult(status, result);
         } catch (JSONException e) {
             return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
@@ -86,87 +83,87 @@ public class App extends Plugin {
     // LOCAL METHODS
     //--------------------------------------------------------------------------
 
-	/**
-	 * Clear the resource cache.
-	 */
-	public void clearCache() {
-	    //((DroidGap)this.ctx).clearCache();
-	    this.ctx.clearCache();
-	}
-	
-	/**
-	 * Load the url into the webview.
-	 * 
-	 * @param url
-	 * @param props			Properties that can be passed in to the DroidGap activity (i.e. loadingDialog, wait, ...)
-	 * @throws JSONException 
-	 */
-	public void loadUrl(String url, JSONObject props) throws JSONException {
-		LOG.d("App", "App.loadUrl("+url+","+props+")");
-		int wait = 0;
-		boolean openExternal = false;
-		boolean clearHistory = false;
+    /**
+     * Clear the resource cache.
+     */
+    public void clearCache() {
+        //((DroidGap)this.ctx).clearCache();
+        this.ctx.clearCache();
+    }
+    
+    /**
+     * Load the url into the webview.
+     * 
+     * @param url
+     * @param props         Properties that can be passed in to the DroidGap activity (i.e. loadingDialog, wait, ...)
+     * @throws JSONException 
+     */
+    public void loadUrl(String url, JSONObject props) throws JSONException {
+        LOG.d("App", "App.loadUrl("+url+","+props+")");
+        int wait = 0;
+        boolean openExternal = false;
+        boolean clearHistory = false;
 
-		// If there are properties, then set them on the Activity
-		HashMap<String, Object> params = new HashMap<String, Object>();
-		if (props != null) {
-			JSONArray keys = props.names();
-			for (int i=0; i<keys.length(); i++) {
-				String key = keys.getString(i); 
-				if (key.equals("wait")) {
-					wait = props.getInt(key);
-				}
-				else if (key.equalsIgnoreCase("openexternal")) {
-					openExternal = props.getBoolean(key);
-				}
-				else if (key.equalsIgnoreCase("clearhistory")) {
-					clearHistory = props.getBoolean(key);
-				}
-				else {
-					Object value = props.get(key);
-					if (value == null) {
+        // If there are properties, then set them on the Activity
+        HashMap<String, Object> params = new HashMap<String, Object>();
+        if (props != null) {
+            JSONArray keys = props.names();
+            for (int i=0; i<keys.length(); i++) {
+                String key = keys.getString(i); 
+                if (key.equals("wait")) {
+                    wait = props.getInt(key);
+                }
+                else if (key.equalsIgnoreCase("openexternal")) {
+                    openExternal = props.getBoolean(key);
+                }
+                else if (key.equalsIgnoreCase("clearhistory")) {
+                    clearHistory = props.getBoolean(key);
+                }
+                else {
+                    Object value = props.get(key);
+                    if (value == null) {
 
-					}
-					else if (value.getClass().equals(String.class)) {
-						params.put(key, (String)value);
-					}
-					else if (value.getClass().equals(Boolean.class)) {
-						params.put(key, (Boolean)value);
-					}
-					else if (value.getClass().equals(Integer.class)) {
-						params.put(key, (Integer)value);
-					}
-				}
-			}
-		}
+                    }
+                    else if (value.getClass().equals(String.class)) {
+                        params.put(key, (String)value);
+                    }
+                    else if (value.getClass().equals(Boolean.class)) {
+                        params.put(key, (Boolean)value);
+                    }
+                    else if (value.getClass().equals(Integer.class)) {
+                        params.put(key, (Integer)value);
+                    }
+                }
+            }
+        }
 
-		// If wait property, then delay loading
+        // If wait property, then delay loading
 
-		if (wait > 0) {
-			try {
-				synchronized(this) {
-					this.wait(wait);
-				}
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			}
-		}
-		this.ctx.showWebPage(url, openExternal, clearHistory, params);
-	}
+        if (wait > 0) {
+            try {
+                synchronized(this) {
+                    this.wait(wait);
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        this.ctx.showWebPage(url, openExternal, clearHistory, params);
+    }
 
-	
-	/**
-	 * Cancel loadUrl before it has been loaded.
-	 */
-	public void cancelLoadUrl() {
-		this.ctx.cancelLoadUrl();
-	}
-	
+    
+    /**
+     * Cancel loadUrl before it has been loaded.
+     */
+    public void cancelLoadUrl() {
+        this.ctx.cancelLoadUrl();
+    }
+    
     /**
      * Clear page history for the app.
      */
     public void clearHistory() {
-    	this.ctx.clearHistory();
+        this.ctx.clearHistory();
     }
     
     /**
@@ -181,11 +178,11 @@ public class App extends Plugin {
      * Override the default behavior of the Android back button.
      * If overridden, when the back button is pressed, the "backKeyDown" JavaScript event will be fired.
      * 
-     * @param override		T=override, F=cancel override
+     * @param override      T=override, F=cancel override
      */
     public void overrideBackbutton(boolean override) {
-    	LOG.i("DroidGap", "WARNING: Back Button Default Behaviour will be overridden.  The backbutton event will be fired!");
-    	this.ctx.bindBackButton(override);
+        LOG.i("DroidGap", "WARNING: Back Button Default Behaviour will be overridden.  The backbutton event will be fired!");
+        this.ctx.bindBackButton(override);
     }
 
     /**
@@ -194,32 +191,32 @@ public class App extends Plugin {
      * @return boolean
      */
     public boolean isBackbuttonOverridden() {
-    	return this.ctx.isBackButtonBound();
+        return this.ctx.isBackButtonBound();
     }
 
     /**
      * Exit the Android application.
      */
     public void exitApp() {
-    	Activity app = (Activity) this.ctx.getContext();
-    	Class c = app.getClass().getSuperclass();
-    	if(c.getName().contains("CordovaActivity"))
-    	{
-    	    ((CordovaActivity) app).endActivity();
-    	}
-    	else
-    	{
-    	    app.finish();
-    	}
+        Activity app = (Activity) this.ctx.getContext();
+        Class c = app.getClass().getSuperclass();
+        if(c.getName().contains("CordovaActivity"))
+        {
+            ((CordovaActivity) app).endActivity();
+        }
+        else
+        {
+            app.finish();
+        }
     }
 
     /**
      * Add entry to approved list of URLs (whitelist)
      * 
-     * @param origin		URL regular expression to allow
-     * @param subdomains	T=include all subdomains under origin
+     * @param origin        URL regular expression to allow
+     * @param subdomains    T=include all subdomains under origin
      */
     public void addWhiteListEntry(String origin, boolean subdomains) {
-    	this.ctx.addWhiteListEntry(origin, subdomains);
+        this.ctx.addWhiteListEntry(origin, subdomains);
     }
 }
