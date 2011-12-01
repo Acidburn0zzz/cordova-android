@@ -481,6 +481,7 @@ public class FileUtils extends Plugin {
      * @param destinationDir
      * @return
      */
+
     private boolean isCopyOnItself(String src, String dest) {
 
         // This weird test is to determine if we are copying or moving a directory into itself.
