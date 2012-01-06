@@ -2,6 +2,7 @@ package com.phonegap;
 
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -11,6 +12,7 @@ import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
@@ -298,7 +300,7 @@ public class CordovaActivity extends Activity {
     
     public void loadUrl(String url)
     {
-        appView.loadUrl(url);
+        appView.loadUrlIntoView(url);
     }
     
     @Override
@@ -431,4 +433,68 @@ public class CordovaActivity extends Activity {
              this.spinnerDialog = null;
          }
      }
+
+     /**
+      * Report an error to the host application. These errors are unrecoverable (i.e. the main resource is unavailable). 
+      * The errorCode parameter corresponds to one of the ERROR_* constants.
+      *
+      * @param errorCode    The error code corresponding to an ERROR_* value.
+      * @param description  A String describing the error.
+      * @param failingUrl   The url that failed to load. 
+      */
+     public void onReceivedError(final int errorCode, final String description, final String failingUrl) {
+         final CordovaActivity me = this;
+
+         // If errorUrl specified, then load it
+         final String errorUrl = me.getStringProperty("errorUrl", null);
+         if ((errorUrl != null) && (!failingUrl.equals(errorUrl))) {
+
+             // Load URL on UI thread
+             me.runOnUiThread(new Runnable() {
+                 public void run() {
+                     me.appView.loadUrl(errorUrl); 
+                 }
+             });
+         }
+         // If not, then display error dialog
+         else {
+             me.runOnUiThread(new Runnable() {
+                 public void run() {
+                     me.appView.setVisibility(View.GONE);
+                     me.displayError("Application Error", description + " ("+failingUrl+")", "OK", true);
+                 }
+             });
+         }
+     }
+     /**
+      * Display an error dialog and optionally exit application.
+      * 
+      * @param title
+      * @param message
+      * @param button
+      * @param exit
+      */
+     public void displayError(final String title, final String message, final String button, final boolean exit) {
+         final CordovaActivity me = this;
+         me.runOnUiThread(new Runnable() {
+             public void run() {
+                 AlertDialog.Builder dlg = new AlertDialog.Builder(me);
+                 dlg.setMessage(message);
+                 dlg.setTitle(title);
+                 dlg.setCancelable(false);
+                 dlg.setPositiveButton(button,
+                         new AlertDialog.OnClickListener() {
+                     public void onClick(DialogInterface dialog, int which) {
+                         dialog.dismiss();
+                         if (exit) {
+                             me.endActivity();
+                         }
+                     }
+                 });
+                 dlg.create();
+                 dlg.show();
+             }
+         });
+     }
+
 }

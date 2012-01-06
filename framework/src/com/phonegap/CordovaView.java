@@ -38,8 +38,8 @@ public class CordovaView extends WebView {
     private String initUrl;
     private Object baseUrl;
     private boolean cancelLoadUrl;
-    protected long loadUrlTimeoutValue;
-    protected int loadUrlTimeout;
+    protected long loadUrlTimeoutValue = 20000;
+    protected int loadUrlTimeout = 0;
 
     
     public CordovaView(Context context)
@@ -296,7 +296,7 @@ public class CordovaView extends WebView {
      * @param url
      * @param time              The number of ms to wait before loading webview
      */
-    private void loadUrlIntoView(final String url, final int time) {
+    public void loadUrlIntoView(final String url, final int time) {
         // Clear cancel flag
         this.cancelLoadUrl = false;
         
@@ -346,7 +346,7 @@ public class CordovaView extends WebView {
      * 
      * @param url
      */
-    private void loadUrlIntoView(final String url) {
+    public void loadUrlIntoView(final String url) {
         if (!url.startsWith("javascript:")) {
             LOG.d(TAG, "DroidGap.loadUrl(%s)", url);
         }
@@ -369,9 +369,8 @@ public class CordovaView extends WebView {
         final CordovaView me = this;
         app.runOnUiThread(new Runnable() {
             public void run() {
-
+                
                 // Handle activity parameters
-
                 // Track URLs loaded instead of using appView history
                 me.urls.push(url);
                 me.clearHistory();
