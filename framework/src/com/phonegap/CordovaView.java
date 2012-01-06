@@ -35,6 +35,9 @@ public class CordovaView extends WebView {
     private HashMap<String, Boolean> whiteListCache = new HashMap<String,Boolean>();
     String url = null;
     Stack<String> urls = new Stack<String>();
+    private String initUrl;
+    private Object baseUrl;
+    private boolean cancelLoadUrl;
 
     
     public CordovaView(Context context)
@@ -264,6 +267,78 @@ public class CordovaView extends WebView {
         return appCode.isBackButtonBound();
     }
     
+    /**
+     * Load the url into the webview after waiting for period of time.
+     * This is used to display the splashscreen for certain amount of time.
+     * 
+     * @param url
+     * @param time              The number of ms to wait before loading webview
+     */
+    public void loadUrl(final String url, int time) {
+        
+        // If first page of app, then set URL to load to be the one passed in
+        if (this.initUrl == null || (this.urls.size() > 0)) {
+            this.loadUrlIntoView(url, time);
+        }
+        // Otherwise use the URL specified in the activity's extras bundle
+        else {
+            this.loadUrl(this.initUrl);
+        }
+    }
+    
+
+    /**
+     * Load the url into the webview after waiting for period of time.
+     * This is used to display the splashscreen for certain amount of time.
+     * 
+     * @param url
+     * @param time              The number of ms to wait before loading webview
+     */
+    private void loadUrlIntoView(final String url, final int time) {
+        // Clear cancel flag
+        this.cancelLoadUrl = false;
+        
+        // If not first page of app, then load immediately
+        if (this.urls.size() > 0) {
+            this.loadUrl(url);
+        }
+        
+        if (!url.startsWith("javascript:")) {
+            LOG.d(TAG, "DroidGap.loadUrl(%s, %d)", url, time);
+        }
+        final CordovaView me = this;
+
+        // Handle activity parameters if we're using the activity!
+        app.runOnUiThread(new Runnable() {
+            public void run() {
+                String className = app.getClass().getName();
+                if(className.contains("CordovaActivity"))
+                    ((CordovaActivity)app).handleActivityParameters();
+            }
+        });
+
+        Runnable runnable = new Runnable() {
+            public void run() {
+                try {
+                    synchronized(this) {
+                        this.wait(time);
+                    }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }
+                if (!me.cancelLoadUrl) {
+                    me.loadUrl(url);
+                }
+                else{
+                    me.cancelLoadUrl = false;
+                    LOG.d(TAG, "Aborting loadUrl(%s): Another URL was loaded before timer expired.", url);
+                }
+            }
+        };
+        Thread thread = new Thread(runnable);
+        thread.start();
+    }
+    
     @Override
     public void clearHistory()
     {
@@ -337,6 +412,7 @@ public class CordovaView extends WebView {
 
     public void cancelLoadUrl() {
         // TODO Auto-generated method stub
+        this.cancelLoadUrl = true;
     }
 
     public void postMessage(String id, Object data) {

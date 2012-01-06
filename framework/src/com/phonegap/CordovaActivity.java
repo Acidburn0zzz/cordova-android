@@ -30,6 +30,10 @@ public class CordovaActivity extends Activity {
     private boolean activityResultKeepRunning;
     private PluginManager pluginManager;
     
+    // Draw a splash screen using an image located in the drawable resource directory.
+    // This is not the same as calling super.loadSplashscreen(url)
+    protected int splashscreen = 0;
+    
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
@@ -89,6 +93,145 @@ public class CordovaActivity extends Activity {
     public void endActivity() {
         this.activityState = ACTIVITY_EXITING;
         this.finish();
+    }
+    
+    
+    /**
+     * Get boolean property for activity.
+     * 
+     * @param name
+     * @param defaultValue
+     * @return
+     */
+    public boolean getBooleanProperty(String name, boolean defaultValue) {
+        Bundle bundle = this.getIntent().getExtras();
+        if (bundle == null) {
+            return defaultValue;
+        }
+        Boolean p = (Boolean)bundle.get(name);
+        if (p == null) {
+            return defaultValue;
+        }
+        return p.booleanValue();
+    }
+
+    /**
+     * Get int property for activity.
+     * 
+     * @param name
+     * @param defaultValue
+     * @return
+     */
+    public int getIntegerProperty(String name, int defaultValue) {
+        Bundle bundle = this.getIntent().getExtras();
+        if (bundle == null) {
+            return defaultValue;
+        }
+        Integer p = (Integer)bundle.get(name);
+        if (p == null) {
+            return defaultValue;
+        }
+        return p.intValue();
+    }
+
+    /**
+     * Get string property for activity.
+     * 
+     * @param name
+     * @param defaultValue
+     * @return
+     */
+    public String getStringProperty(String name, String defaultValue) {
+        Bundle bundle = this.getIntent().getExtras();
+        if (bundle == null) {
+            return defaultValue;
+        }
+        String p = bundle.getString(name);
+        if (p == null) {
+            return defaultValue;
+        }
+        return p;
+    }
+
+    /**
+     * Get double property for activity.
+     * 
+     * @param name
+     * @param defaultValue
+     * @return
+     */
+    public double getDoubleProperty(String name, double defaultValue) {
+        Bundle bundle = this.getIntent().getExtras();
+        if (bundle == null) {
+            return defaultValue;
+        }
+        Double p = (Double)bundle.get(name);
+        if (p == null) {
+            return defaultValue;
+        }
+        return p.doubleValue();
+    }
+
+    /**
+     * Set boolean property on activity.
+     * 
+     * @param name
+     * @param value
+     */
+    public void setBooleanProperty(String name, boolean value) {
+        this.getIntent().putExtra(name, value);
+    }
+    
+    /**
+     * Set int property on activity.
+     * 
+     * @param name
+     * @param value
+     */
+    public void setIntegerProperty(String name, int value) {
+        this.getIntent().putExtra(name, value);
+    }
+    
+    /**
+     * Set string property on activity.
+     * 
+     * @param name
+     * @param value
+     */
+    public void setStringProperty(String name, String value) {
+        this.getIntent().putExtra(name, value);
+    }
+
+    /**
+     * Set double property on activity.
+     * 
+     * @param name
+     * @param value
+     */
+    public void setDoubleProperty(String name, double value) {
+        this.getIntent().putExtra(name, value);
+    }
+
+    
+    /**
+     * Look at activity parameters and process them.
+     * This must be called from the main UI thread.
+     */
+    void handleActivityParameters() {
+
+        // If backgroundColor
+        this.backgroundColor = this.getIntegerProperty("backgroundColor", Color.BLACK);
+        this.root.setBackgroundColor(this.backgroundColor);
+
+        // If spashscreen
+        this.splashscreen = this.getIntegerProperty("splashscreen", 0);
+        if ((this.appView.urls.size() == 0) && (this.splashscreen != 0)) {
+            root.setBackgroundResource(this.splashscreen);
+        }
+
+        
+        // If keepRunning
+        this.keepRunning = this.getBooleanProperty("keepRunning", true);
     }
     
     @Override
