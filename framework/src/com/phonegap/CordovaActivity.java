@@ -2,6 +2,8 @@ package com.phonegap;
 
 
 import android.app.Activity;
+import android.app.ProgressDialog;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -33,6 +35,7 @@ public class CordovaActivity extends Activity {
     // Draw a splash screen using an image located in the drawable resource directory.
     // This is not the same as calling super.loadSplashscreen(url)
     protected int splashscreen = 0;
+    private ProgressDialog spinnerDialog;
     
     @Override
     public void onCreate(Bundle savedInstanceState)
@@ -397,5 +400,35 @@ public class CordovaActivity extends Activity {
      {
          this.postMessage("onOptionsItemSelected", item);
          return true;
+     }
+
+     /**
+      * Show the spinner.  Must be called from the UI thread.
+      * 
+      * @param title         Title of the dialog
+      * @param message       The message of the dialog
+      */
+     public void spinnerStart(final String title, final String message) {
+         if (this.spinnerDialog != null) {
+             this.spinnerDialog.dismiss();
+             this.spinnerDialog = null;
+         }
+         final CordovaActivity me = this;
+         this.spinnerDialog = ProgressDialog.show(CordovaActivity.this, title , message, true, true, 
+                 new DialogInterface.OnCancelListener() { 
+             public void onCancel(DialogInterface dialog) {
+                 me.spinnerDialog = null;
+             }
+         });
+     }
+
+     /**
+      * Stop spinner.
+      */
+     public void spinnerStop() {
+         if (this.spinnerDialog != null) {
+             this.spinnerDialog.dismiss();
+             this.spinnerDialog = null;
+         }
      }
 }

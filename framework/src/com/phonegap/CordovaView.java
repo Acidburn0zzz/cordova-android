@@ -38,6 +38,8 @@ public class CordovaView extends WebView {
     private String initUrl;
     private Object baseUrl;
     private boolean cancelLoadUrl;
+    protected long loadUrlTimeoutValue;
+    protected int loadUrlTimeout;
 
     
     public CordovaView(Context context)
@@ -282,7 +284,7 @@ public class CordovaView extends WebView {
         }
         // Otherwise use the URL specified in the activity's extras bundle
         else {
-            this.loadUrl(this.initUrl);
+            this.loadUrlIntoView(this.initUrl);
         }
     }
     
@@ -339,6 +341,102 @@ public class CordovaView extends WebView {
         thread.start();
     }
     
+    /**
+     * Load the url into the webview.
+     * 
+     * @param url
+     */
+    private void loadUrlIntoView(final String url) {
+        if (!url.startsWith("javascript:")) {
+            LOG.d(TAG, "DroidGap.loadUrl(%s)", url);
+        }
+
+        this.url = url;
+        if (this.baseUrl == null) {
+            int i = url.lastIndexOf('/');
+            if (i > 0) {
+                this.baseUrl = url.substring(0, i+1);
+            }
+            else {
+                this.baseUrl = this.url + "/";
+            }
+        }
+        if (!url.startsWith("javascript:")) {
+            LOG.d(TAG, "DroidGap: url=%s baseUrl=%s", url, baseUrl);
+        }
+        
+        // Load URL on UI thread
+        final CordovaView me = this;
+        app.runOnUiThread(new Runnable() {
+            public void run() {
+
+                // Handle activity parameters
+
+                // Track URLs loaded instead of using appView history
+                me.urls.push(url);
+                me.clearHistory();
+                
+                if(app.getClass().getName().contains("CordovaActivity"))
+                {
+                    CordovaActivity properApp = (CordovaActivity) app;
+                    properApp.handleActivityParameters();
+
+                    
+                    // If loadingDialog property, then show the App loading dialog for first page of app
+                    String loading = null;
+                    if (me.urls.size() == 1) {
+                        loading = properApp.getStringProperty("loadingDialog", null);
+                    }
+                    else {
+                        loading = properApp.getStringProperty("loadingPageDialog", null);
+                    }
+                    if (loading != null) {
+
+                        String title = "";
+                        String message = "Loading Application...";
+
+                        if (loading.length() > 0) {
+                            int comma = loading.indexOf(',');
+                            if (comma > 0) {
+                                title = loading.substring(0, comma);
+                                message = loading.substring(comma+1);
+                            }
+                            else {
+                                title = "";
+                                message = loading;
+                            }
+                        }
+                        properApp.spinnerStart(title, message);
+                    }
+                }
+
+                // Create a timeout timer for loadUrl
+                final int currentLoadUrlTimeout = me.loadUrlTimeout;
+                Runnable runnable = new Runnable() {
+                    public void run() {
+                        try {
+                            synchronized(this) {
+                                wait(me.loadUrlTimeoutValue);
+                            }
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+
+                        // If timeout, then stop loading and handle error
+                        if (me.loadUrlTimeout == currentLoadUrlTimeout) {
+                            me.stopLoading();
+                            LOG.e(TAG, "DroidGap: TIMEOUT ERROR! - calling webViewClient");
+                            me.viewClient.onReceivedError(me, -6, "The connection to the server was unsuccessful.", url);
+                        }
+                    }
+                };
+                Thread thread = new Thread(runnable);
+                thread.start();
+                me.loadUrl(url);
+            }
+        });
+    }
+    
     @Override
     public void clearHistory()
     {
@@ -383,7 +481,7 @@ public class CordovaView extends WebView {
                 }
                 
                 // Load new URL
-                this.loadUrl(url);
+                this.loadUrlIntoView(url);
             }
             // Load in default viewer if not
             else {
