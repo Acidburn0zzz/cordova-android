@@ -303,6 +303,11 @@ public class CordovaActivity extends Activity {
         appView.loadUrlIntoView(url);
     }
     
+    public void loadUrl(String url, int time)
+    {
+        appView.loadUrlIntoView(url, time);
+    }
+    
     @Override
     /**
      * Called when an activity you launched exits, giving you the requestCode you started it with,

@@ -202,7 +202,7 @@ public class App extends Plugin {
      */
     public void exitApp() {
     	Activity app = (Activity) this.ctx.getContext();
-    	Class c = app.getClass();
+    	Class c = app.getClass().getSuperclass();
     	if(c.getName().contains("CordovaActivity"))
     	{
     	    ((CordovaActivity) app).endActivity();

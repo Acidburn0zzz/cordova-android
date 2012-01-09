@@ -19,6 +19,7 @@ import android.content.Intent;
 import android.content.res.XmlResourceParser;
 import android.net.Uri;
 import android.util.AttributeSet;
+import android.view.View;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebSettings.LayoutAlgorithm;
@@ -46,6 +47,8 @@ public class CordovaView extends WebView {
     {
         super(context);
         app = (Activity) context;
+        //Set the view as invisible when we create it, then bring it out when we load the URL
+        this.setVisibility(View.INVISIBLE);
         init();
     }
     
@@ -313,7 +316,7 @@ public class CordovaView extends WebView {
         // Handle activity parameters if we're using the activity!
         app.runOnUiThread(new Runnable() {
             public void run() {
-                String className = app.getClass().getName();
+                String className = app.getClass().getSuperclass().getName();
                 if(className.contains("CordovaActivity"))
                     ((CordovaActivity)app).handleActivityParameters();
             }
@@ -375,7 +378,8 @@ public class CordovaView extends WebView {
                 me.urls.push(url);
                 me.clearHistory();
                 
-                if(app.getClass().getName().contains("CordovaActivity"))
+                String className = app.getClass().getSuperclass().getName();
+                if(className.contains("Cordova"))
                 {
                     CordovaActivity properApp = (CordovaActivity) app;
                     properApp.handleActivityParameters();
