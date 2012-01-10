@@ -72,6 +72,16 @@ public class CordovaView extends WebView {
         init();
     }
     
+    public GapClient getGapClient()
+    {
+        return appCode;
+    }
+    
+    public CordovaClient getCordovaClient()
+    {
+        return viewClient;
+    }
+    
     public void onPause()
     {
         appCode.pluginManager.onPause(true);
