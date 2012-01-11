@@ -110,7 +110,7 @@ public interface CordovaInterface {
 
     public abstract void addWhiteListEntry(String origin, boolean subdomains);
 
-    public abstract void bindBackButton();
+    public abstract void bindBackButton(boolean override);
 
     public abstract boolean isBackButtonBound();
 

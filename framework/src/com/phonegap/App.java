@@ -185,7 +185,7 @@ public class App extends Plugin {
      */
     public void overrideBackbutton(boolean override) {
     	LOG.i("DroidGap", "WARNING: Back Button Default Behaviour will be overridden.  The backbutton event will be fired!");
-    	this.ctx.bindBackButton();
+    	this.ctx.bindBackButton(override);
     }
 
     /**

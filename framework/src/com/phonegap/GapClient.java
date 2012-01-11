@@ -427,8 +427,8 @@ public class GapClient extends WebChromeClient implements CordovaInterface {
         appView.addWhiteListEntry(origin, subdomains);
     }
 
-    public void bindBackButton() {
-        this.bound = true;
+    public void bindBackButton(boolean value) {
+        this.bound = value;
     }
 
     public boolean isBackButtonBound() {
@@ -444,5 +444,6 @@ public class GapClient extends WebChromeClient implements CordovaInterface {
             boolean clearHistory, HashMap<String, Object> params) {
         this.appView.showWebPage(url, openExternal, clearHistory, params);
     }
+
 
 }
