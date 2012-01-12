@@ -61,8 +61,10 @@ public class CordovaActivity extends Activity {
         appView = new CordovaView(this);
 
         root.addView(appView);
-        pluginManager = appView.appCode.pluginManager;
+        
         setContentView(root);
+        appView.init();
+        pluginManager = appView.appCode.pluginManager;
     }
     
 

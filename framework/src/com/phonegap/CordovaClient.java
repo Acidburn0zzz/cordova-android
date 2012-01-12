@@ -144,7 +144,9 @@ public class CordovaClient extends WebViewClient {
 
         // Clear history so history.back() doesn't do anything.  
         // So we can reinit() native side CallbackServer & PluginManager.
-        view.clearHistory(); 
+        
+        //Add the page to the history by clearing it
+        view.clearHistory();
     }
     
     /**
@@ -157,9 +159,14 @@ public class CordovaClient extends WebViewClient {
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
 
+        String lastUrl = appView.urls.lastElement();
+        //The special case when the page was clicked on from a link
+        if(!lastUrl.equals(url))
+            appView.urls.push(url);
+        
         // Clear timeout flag
         this.appView.loadUrlTimeout++;
-
+        
         // Try firing the onNativeReady event in JS. If it fails because the JS is
         // not loaded yet then just set a flag so that the onNativeReady can be fired
         // from the JS side when the JS gets to that code.

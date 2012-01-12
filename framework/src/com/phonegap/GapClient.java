@@ -417,6 +417,7 @@ public class GapClient extends WebChromeClient implements CordovaInterface {
     }
 
     public void clearHistory() {
+        appView.clearHistory();
     }
     
     public boolean backHistory() {

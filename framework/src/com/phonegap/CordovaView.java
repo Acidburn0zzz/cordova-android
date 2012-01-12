@@ -49,7 +49,6 @@ public class CordovaView extends WebView {
         app = (Activity) context;
         //Set the view as invisible when we create it, then bring it out when we load the URL
         this.setVisibility(View.INVISIBLE);
-        init();
     }
     
     public CordovaView(Context context, AttributeSet attrs)
@@ -385,7 +384,6 @@ public class CordovaView extends WebView {
                 
                 // Handle activity parameters
                 // Track URLs loaded instead of using appView history
-                me.urls.push(url);
                 me.clearHistory();
                 
                 String className = app.getClass().getSuperclass().getName();
@@ -393,7 +391,6 @@ public class CordovaView extends WebView {
                 {
                     CordovaActivity properApp = (CordovaActivity) app;
                     properApp.handleActivityParameters();
-
                     
                     // If loadingDialog property, then show the App loading dialog for first page of app
                     String loading = null;
@@ -460,6 +457,7 @@ public class CordovaView extends WebView {
         if (this.url != null) {
             this.urls.push(this.url);
         }
+        
     }
     
 
