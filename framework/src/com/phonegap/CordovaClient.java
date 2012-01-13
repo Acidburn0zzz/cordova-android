@@ -158,12 +158,14 @@ public class CordovaClient extends WebViewClient {
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
-
-        String lastUrl = appView.urls.lastElement();
-        //The special case when the page was clicked on from a link
-        if(!lastUrl.equals(url))
-            appView.urls.push(url);
         
+        if(appView.urls.size() > 0)
+        {
+            String lastUrl = appView.urls.lastElement();
+            //The special case when the page was clicked on from a link
+            if((lastUrl != null) && !lastUrl.equals(url))
+                appView.urls.push(url);
+        }
         // Clear timeout flag
         this.appView.loadUrlTimeout++;
         

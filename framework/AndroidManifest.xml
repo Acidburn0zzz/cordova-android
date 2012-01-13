@@ -29,9 +29,15 @@
     
     <uses-feature android:name="android.hardware.camera" />
     <uses-feature android:name="android.hardware.camera.autofocus" />
-
+    
+    <instrumentation
+        android:name="android.test.InstrumentationTestRunner"
+        android:targetPackage="com.phonegap" />
+    
     <application android:icon="@drawable/icon" android:label="@string/app_name"
         android:debuggable="true" android:hardwareAccelerated="true">
+        <uses-library android:name="android.test.runner" />
+        
         <activity android:name=".StandAlone" android:windowSoftInputMode="adjustPan"
                   android:label="@string/app_name" android:configChanges="orientation|keyboardHidden">
             <intent-filter>
@@ -39,9 +45,34 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name="com.phonegap.DroidGap" android:label="@string/app_name" 
-                  android:configChanges="orientation|keyboardHidden">
+        <activity
+            android:windowSoftInputMode="adjustPan"
+            android:label="@string/app_name" 
+            android:configChanges="orientation|keyboardHidden"
+            android:name="com.phonegap.test.activities.PhoneGapViewTestActivity" >
+            <intent-filter >
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:windowSoftInputMode="adjustPan"
+            android:label="@string/app_name" 
+            android:configChanges="orientation|keyboardHidden"
+            android:name="com.phonegap.test.activities.PhoneGapSplash" >
             <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.SAMPLE_CODE" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:windowSoftInputMode="adjustPan"
+            android:label="@string/app_name" 
+            android:configChanges="orientation|keyboardHidden"
+            android:name="com.phonegap.test.activities.PhoneGapActivity" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.SAMPLE_CODE" />
             </intent-filter>
         </activity>
     </application>

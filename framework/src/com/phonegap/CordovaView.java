@@ -261,7 +261,7 @@ public class CordovaView extends WebView {
         // Check webview first to see if there is a history
         // This is needed to support curPage#diffLink, since they are added to appView's history, but not our history url array (JQMobile behavior)
         if (this.canGoBack()) {
-            this.goBack();  
+            this.goBack();
             return true;
         }
 
