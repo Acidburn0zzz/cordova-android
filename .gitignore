@@ -10,6 +10,5 @@ framework/bin
 framework/assets/www/.DS_Store
 framework/assets/www/phonegap-*.js
 example
-test
 tmp
 *.tmp
