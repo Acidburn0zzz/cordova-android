@@ -264,7 +264,11 @@ public class CordovaView extends WebView {
             this.goBack();
             return true;
         }
-
+        else
+        {
+            return false;
+        }
+/*
         // If our managed history has prev url
         if (this.urls.size() > 1) {
             this.urls.pop();                // Pop current url
@@ -274,6 +278,7 @@ public class CordovaView extends WebView {
         }
         
         return false;
+        */
     }
 
     public boolean checkBackKey() {
@@ -526,5 +531,9 @@ public class CordovaView extends WebView {
 
     public void postMessage(String id, Object data) {
         appCode.pluginManager.postMessage(id, data);
+    }
+
+    public void reinit(String url) {
+        appCode.reinit(url);
     }
 }

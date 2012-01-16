@@ -446,5 +446,9 @@ public class GapClient extends WebChromeClient implements CordovaInterface {
         this.appView.showWebPage(url, openExternal, clearHistory, params);
     }
 
+    public void reinit(String url) {
+        callbackServer.reinit(url);
+    }
+
 
 }

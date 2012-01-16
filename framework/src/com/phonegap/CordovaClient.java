@@ -24,6 +24,8 @@ public class CordovaClient extends WebViewClient {
     Activity ctx;
     CordovaView appView;
     String TAG = "PhoneGapClient";
+    private boolean firstRunComplete = false;
+    private String lastUrl;
 
     /**
      * Constructor.
@@ -141,12 +143,13 @@ public class CordovaClient extends WebViewClient {
     
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
-
+        this.lastUrl = url;
         // Clear history so history.back() doesn't do anything.  
         // So we can reinit() native side CallbackServer & PluginManager.
         
         //Add the page to the history by clearing it
-        view.clearHistory();
+        //view.clearHistory();
+
     }
     
     /**
@@ -159,13 +162,12 @@ public class CordovaClient extends WebViewClient {
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
         
-        if(appView.urls.size() > 0)
+        String baseUrl = url.split("#")[0];
+        if(!lastUrl.equals(baseUrl) && firstRunComplete)
         {
-            String lastUrl = appView.urls.lastElement();
-            //The special case when the page was clicked on from a link
-            if((lastUrl != null) && !lastUrl.equals(url))
-                appView.urls.push(url);
+            this.appView.reinit(url);
         }
+        firstRunComplete  = true;
         // Clear timeout flag
         this.appView.loadUrlTimeout++;
         
