@@ -67,6 +67,12 @@ Importing a PhoneGap Android Project into Eclipse
 5. Right click on the project root: Run as > Run Configurations
 6. Click on the Target tab and select Manual (this way you can choose the emulator or device to build to)
 
+Running Tests for Cordova-Android without Eclipse
+----
+
+1. Launch an Android Emulator or connect a device
+2. Go in the framework directory
+3. Run this command: adb shell am instrument -w com.phonegap/android.test.InstrumentationTestRunner
 
 Further Reading
 ---
