@@ -20,7 +20,7 @@ public class CordovaActivityTest extends ActivityInstrumentationTestCase2<PhoneG
         super("com.phonegap.test.activities",PhoneGapActivity.class);
     }
     
-    protected void setUp() throws Exception{
+    protected void setUp() throws Exception {
         super.setUp();
         testActivity = this.getActivity();
         containerView = (FrameLayout) testActivity.findViewById(android.R.id.content);
@@ -53,10 +53,4 @@ public class CordovaActivityTest extends ActivityInstrumentationTestCase2<PhoneG
         assertTrue(className.equals("PluginManager"));
     }
 
-    /*
-    public void testBackButton() {
-        CordovaView v = (CordovaView) testView;
-        assertTrue(v.checkBackKey());
-    }
-    */
 }

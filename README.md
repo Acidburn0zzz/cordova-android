@@ -74,6 +74,10 @@ Running Tests for Cordova-Android without Eclipse
 2. Go in the framework directory
 3. Run this command: adb shell am instrument -w com.phonegap/android.test.InstrumentationTestRunner
 
+Required Libraries for Tests (Copy into libs directory):
+---------
+- Android Web Driver Libraries: (Found with the Android SDK under extras/google/webdriver/android_webdriver_library.jar)
+
 Further Reading
 ---
 

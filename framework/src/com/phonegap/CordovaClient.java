@@ -15,6 +15,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
 import com.phonegap.api.LOG;
+import com.phonegap.test.activities.CordovaDriverAction;
 
 /**
  * The webview client receives notifications about appView
@@ -38,6 +39,19 @@ public class CordovaClient extends WebViewClient {
         appCode.setWebViewClient(this);
     }
     
+    /*
+     * Utility methods for WebDriver
+     */
+    
+    public CordovaClient(Activity testActivity) {
+        this.ctx = testActivity;
+    }
+    
+    public void setCordovaView(CordovaView view)
+    {
+        this.appView = view;
+    }
+
     /**
      * Give the host application a chance to take over the control when a new url 
      * is about to be loaded in the current WebView.

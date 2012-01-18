@@ -9,6 +9,7 @@ import com.phonegap.api.IPlugin;
 import com.phonegap.api.LOG;
 import com.phonegap.api.CordovaInterface;
 import com.phonegap.api.PluginManager;
+import com.phonegap.test.activities.CordovaDriverAction;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -53,7 +54,23 @@ public class GapClient extends WebChromeClient implements CordovaInterface {
         appView.setWebChromeClient(this);
         pluginManager = new PluginManager(appView, this);
     }
+
+    /*
+     * This is created for WebDriver Compatibility
+     */
     
+    public GapClient(Activity testActivity) {
+        mCtx = testActivity;
+       
+    }
+    
+    public void testInit(CordovaView view)
+    {
+        callbackServer = new CallbackServer();
+        appView = view;
+        pluginManager = new PluginManager(appView, this);
+    }
+
     public void onDestroy()
     {
         pluginManager.onDestroy();
