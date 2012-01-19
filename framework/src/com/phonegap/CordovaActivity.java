@@ -6,6 +6,8 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -15,6 +17,7 @@ import android.content.Intent;
 import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -299,25 +302,41 @@ public class CordovaActivity extends Activity {
     
     public void moveAssetsToJail()
     {
+        ArrayList<String> fileList = new ArrayList<String>();
         AssetManager myAssets = this.getAssets();
         String jailPath = "/data/data/" + this.getPackageName() + "/www-data/";
         String [] files = null;
         try {
            files = myAssets.list("");
+           for(String filename : files)
+           {
+               fileList.add(filename);
+           }
         }
         catch (IOException e)
         {
             //return fail;
+            Log.d("CordoaActivity", "Unable to find assets");
         }
-        for(String filename : files)
+        for(int i = 0; i < fileList.size(); ++i)
         {
+            String filename = fileList.get(i);
             InputStream in = null;
             OutputStream out = null;
             try
             {
                 String fullPath = jailPath + filename;
-                boolean test = new File(fullPath).mkdir();
-                if(test)
+                File testFile = new File(fullPath);
+                boolean test = testFile.mkdirs();
+                if(testFile.isDirectory())
+                {
+                    String [] childFiles = myAssets.list(filename);
+                    for(String childName : childFiles)
+                    {
+                        fileList.add(filename + "/" + childName);
+                    }
+                }
+                else
                 {
                     in = myAssets.open(filename);
                     out = new FileOutputStream(fullPath);
@@ -326,7 +345,7 @@ public class CordovaActivity extends Activity {
             }
             catch (IOException e)
             {
-                
+                Log.d("CordovaActivity", "Unable to copy files");
             }
         }
     }

@@ -48,6 +48,7 @@ public class JailTest extends ActivityInstrumentationTestCase2<JailActivity> {
     }
     
     public void testForJailCheck() {
+       sleep();
        assertTrue(testActivity.areAssetsInJail());
     }
 
