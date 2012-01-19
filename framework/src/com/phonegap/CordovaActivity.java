@@ -1,11 +1,18 @@
 package com.phonegap;
 
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.res.AssetManager;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Display;
@@ -277,6 +284,66 @@ public class CordovaActivity extends Activity {
         }
     }
     
+    /*
+     * This allows us to move assets out of the android_assets directory into the jail.  The main benefit of this
+     * is that we can then access interactive elements, and also not have to worry about our application breaking due to 
+     * poor input handling by the Android API.
+     */
+    
+    public boolean areAssetsInJail()
+    {
+        String jailPath = "/data/data/" + this.getPackageName() + "/www-data/";
+        File f = new File(jailPath);
+        return f.exists();
+    }
+    
+    public void moveAssetsToJail()
+    {
+        AssetManager myAssets = this.getAssets();
+        String jailPath = "/data/data/" + this.getPackageName() + "/www-data/";
+        String [] files = null;
+        try {
+           files = myAssets.list("");
+        }
+        catch (IOException e)
+        {
+            //return fail;
+        }
+        for(String filename : files)
+        {
+            InputStream in = null;
+            OutputStream out = null;
+            try
+            {
+                String fullPath = jailPath + filename;
+                boolean test = new File(fullPath).mkdir();
+                if(test)
+                {
+                    in = myAssets.open(filename);
+                    out = new FileOutputStream(fullPath);
+                    copyFile(in, out);
+                }
+            }
+            catch (IOException e)
+            {
+                
+            }
+        }
+    }
+    
+    
+    private void copyFile(InputStream in, OutputStream out) throws IOException {
+        byte[] buffer = new byte[1024];
+        int read;
+        while((read = in.read(buffer)) != -1) {
+            out.write(buffer, 0, read);
+        }
+        in.close();
+        in = null;
+        out.flush();
+        out.close();
+        out = null;
+    }
 
     @Override
     /**
@@ -298,6 +365,18 @@ public class CordovaActivity extends Activity {
         else {
             this.endActivity();
         }
+    }
+    
+    public void loadJailedFile(String file)
+    {
+        String jailPath = "/data/data/" + this.getPackageName() + "/www-data/" + file;
+        appView.loadUrlIntoView("file://" + jailPath);
+    }
+    
+    public void loadJailedFile(String file, int time)
+    {
+        String jailPath = "/data/data/" + this.getPackageName() + "/www-data/" + file;
+        appView.loadUrlIntoView("file://" + jailPath, time);
     }
     
     public void loadUrl(String url)
