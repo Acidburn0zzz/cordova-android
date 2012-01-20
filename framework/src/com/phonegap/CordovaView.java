@@ -122,10 +122,10 @@ public class CordovaView extends WebView {
         settings.setDatabasePath(databasePath);
 
         // Enable DOM storage
-        WebViewReflect.setDomStorage(settings);
+        settings.setDomStorageEnabled(true);
         
         // Enable built-in geolocation
-        WebViewReflect.setGeolocationEnabled(settings, true);
+        settings.setGeolocationEnabled(true);
         
         //Initalize the other parts of the application
         appCode = new GapClient(this, this.getContext());
