@@ -2,7 +2,6 @@ package com.phonegap.test;
 
 import com.phonegap.CordovaClient;
 import com.phonegap.CordovaView;
-import com.phonegap.CordovaViewFactory;
 import com.phonegap.GapClient;
 import com.phonegap.api.PluginManager;
 import com.phonegap.test.activities.CordovaDriverAction;
