@@ -167,6 +167,7 @@ public class CordovaView extends WebView {
                     }
                     
                 }
+                
             }
             try {
                 eventType = xml.next();
@@ -185,7 +186,7 @@ public class CordovaView extends WebView {
      * @param origin        URL regular expression to allow
      * @param subdomains    T=include all subdomains under origin
      */
-    public void addWhiteListEntry(String origin, boolean subdomains) {
+    private void addWhiteListEntry(String origin, boolean subdomains) {
       try {
         // Unlimited access to network resources
         if(origin.compareTo("*") == 0) {
