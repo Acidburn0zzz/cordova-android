@@ -1,5 +1,4 @@
 package com.phonegap;
-
 import com.phonegap.api.LOG;
 
 import android.content.Context;
@@ -89,4 +88,4 @@ class LinearLayoutSoftKeyboardDetect extends LinearLayout {
            oldHeight = height;
            oldWidth = width;
        }
-}
+
