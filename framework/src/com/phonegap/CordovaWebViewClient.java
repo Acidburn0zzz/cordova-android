@@ -1,6 +1,8 @@
 package com.phonegap;
 
 import android.app.Activity;
+import com.phonegap.api.LOG;
+
 import android.content.Intent;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
@@ -10,11 +12,11 @@ import android.net.Uri;
 import android.net.http.SslError;
 import android.util.Log;
 import android.view.View;
+import android.webkit.HttpAuthHandler;
 import android.webkit.SslErrorHandler;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-import com.phonegap.api.LOG;
 import com.phonegap.test.activities.CordovaDriverAction;
 
 /**
@@ -24,7 +26,7 @@ public class CordovaWebViewClient extends WebViewClient {
 
     Activity ctx;
     CordovaWebView appView;
-    String TAG = "PhoneGapClient";
+    String TAG = "CordovaClient";
     private boolean firstRunComplete = false;
     private String lastUrl;
 
@@ -52,7 +54,7 @@ public class CordovaWebViewClient extends WebViewClient {
         this.appView = view;
     }
 
-    /**
+   /**
      * Give the host application a chance to take over the control when a new url 
      * is about to be loaded in the current WebView.
      * 
@@ -74,7 +76,7 @@ public class CordovaWebViewClient extends WebViewClient {
                 intent.setData(Uri.parse(url));
                 ctx.startActivity(intent);
             } catch (android.content.ActivityNotFoundException e) {
-                Log.e(TAG, "Error dialing "+url+": "+ e.toString());
+               LOG.e(TAG, "Error dialing "+url+": "+ e.toString());
             }
         }
 
@@ -85,7 +87,7 @@ public class CordovaWebViewClient extends WebViewClient {
                 intent.setData(Uri.parse(url));
                 ctx.startActivity(intent);
             } catch (android.content.ActivityNotFoundException e) {
-                Log.e(TAG, "Error showing map "+url+": "+ e.toString());
+               LOG.e(TAG, "Error showing map "+url+": "+ e.toString());
             }
         }
 
@@ -128,7 +130,7 @@ public class CordovaWebViewClient extends WebViewClient {
                 intent.setType("vnd.android-dir/mms-sms");
                 ctx.startActivity(intent);
             } catch (android.content.ActivityNotFoundException e) {
-                Log.e(TAG, "Error sending sms "+url+":"+ e.toString());
+               LOG.e(TAG, "Error sending sms "+url+":"+ e.toString());
             }
         }
 
@@ -140,6 +142,11 @@ public class CordovaWebViewClient extends WebViewClient {
             if (url.startsWith("file://")) {
                 appView.appCode.loadUrl(url);
             }
+            /*
+            if (url.startsWith("file://") || url.indexOf(this.ctx.baseUrl) == 0 || ctx.isUrlWhiteListed(url)) {
+                this.ctx.loadUrl(url);
+            }
+            */
 
             // If not our application, let default viewer handle
             else {
@@ -155,15 +162,38 @@ public class CordovaWebViewClient extends WebViewClient {
         return true;
     }
     
+   /**
+     * On received http auth request.
+     * The method reacts on all registered authentication tokens. There is one and only one authentication token for any host + realm combination 
+     * 
+     * @param view
+     *            the view
+     * @param handler
+     *            the handler
+     * @param host
+     *            the host
+     * @param realm
+     *            the realm
+     */
+    @Override
+    public void onReceivedHttpAuthRequest(WebView view, HttpAuthHandler handler, String host,
+            String realm) {
+       
+        // get the authentication token
+        AuthenticationToken token = ctx.getAuthenticationToken(host,realm);
+        
+        if(token != null) {
+            handler.proceed(token.getUserName(), token.getPassword());
+        }
+    }
+
+    
     @Override
     public void onPageStarted(WebView view, String url, Bitmap favicon) {
-        this.lastUrl = url;
+
         // Clear history so history.back() doesn't do anything.  
         // So we can reinit() native side CallbackServer & PluginManager.
-        
-        //Add the page to the history by clearing it
-        //view.clearHistory();
-
+        view.clearHistory(); 
     }
     
     /**
@@ -175,16 +205,18 @@ public class CordovaWebViewClient extends WebViewClient {
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
-        
+       /* 
         String baseUrl = url.split("#")[0];
         if(!lastUrl.equals(baseUrl) && firstRunComplete)
         {
             this.appView.reinit(url);
         }
         firstRunComplete  = true;
+       */ 
+
         // Clear timeout flag
-        this.appView.loadUrlTimeout++;
-        
+        this.ctx.loadUrlTimeout++;
+
         // Try firing the onNativeReady event in JS. If it fails because the JS is
         // not loaded yet then just set a flag so that the onNativeReady can be fired
         // from the JS side when the JS gets to that code.
@@ -201,7 +233,7 @@ public class CordovaWebViewClient extends WebViewClient {
                         ctx.runOnUiThread(new Runnable() {
                             public void run() {
                                 appView.setVisibility(View.VISIBLE);
-                            }
+                           }
                         });
                     } catch (InterruptedException e) {
                     }
@@ -218,7 +250,7 @@ public class CordovaWebViewClient extends WebViewClient {
             }
             //((Object) ctx).endActivity();
             ctx.finish();
-        }
+       }
     }
     
     /**
@@ -242,7 +274,7 @@ public class CordovaWebViewClient extends WebViewClient {
 
         // Handle error
         //((Object) ctx).onReceivedError(errorCode, description, failingUrl);
-    }
+   }
     
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
         
@@ -257,7 +289,7 @@ public class CordovaWebViewClient extends WebViewClient {
                 return;
             } else {
                 // debug = false
-                super.onReceivedSslError(view, handler, error);
+               super.onReceivedSslError(view, handler, error);    
             }
         } catch (NameNotFoundException e) {
             // When it doubt, lock it out!

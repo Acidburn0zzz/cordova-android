@@ -314,7 +314,8 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
     @Override
     public boolean onConsoleMessage(ConsoleMessage consoleMessage)
     {       
-        LOG.d(TAG, consoleMessage.message());
+        if(consoleMessage.message() != null)
+            LOG.d(TAG, consoleMessage.message());
         return super.onConsoleMessage(consoleMessage);
     }
 
