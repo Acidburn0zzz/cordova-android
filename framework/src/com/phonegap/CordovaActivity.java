@@ -33,7 +33,7 @@ import com.phonegap.api.PluginManager;
 
 public class CordovaActivity extends Activity {
 
-    CordovaView appView;
+    CordovaWebView appView;
     private LinearLayoutSoftKeyboardDetect root;
     private int backgroundColor = Color.BLACK;
     private static int ACTIVITY_STARTING = 0;
@@ -68,7 +68,7 @@ public class CordovaActivity extends Activity {
         root.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 
                 ViewGroup.LayoutParams.FILL_PARENT, 0.0F));
         
-        appView = new CordovaView(this);
+        appView = new CordovaWebView(this);
 
         root.addView(appView);
         
@@ -601,5 +601,10 @@ public class CordovaActivity extends Activity {
              }
          });
      }
+
+
+    protected void sendJavascript(String statement) {
+        appView.appCode.sendJavascript(statement);
+    }
 
 }

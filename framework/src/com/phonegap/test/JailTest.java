@@ -1,6 +1,6 @@
 package com.phonegap.test;
 
-import com.phonegap.CordovaView;
+import com.phonegap.CordovaWebView;
 import com.phonegap.api.PluginManager;
 import com.phonegap.test.activities.JailActivity;
 import com.phonegap.test.activities.PhoneGapActivity;
@@ -14,7 +14,7 @@ public class JailTest extends ActivityInstrumentationTestCase2<JailActivity> {
     private JailActivity testActivity;
     private FrameLayout containerView;
     private LinearLayout innerContainer;
-    private CordovaView testView;
+    private CordovaWebView testView;
     private static final long TIMEOUT = 1000;
 
     public JailTest()
@@ -27,7 +27,7 @@ public class JailTest extends ActivityInstrumentationTestCase2<JailActivity> {
         testActivity = this.getActivity();
         containerView = (FrameLayout) testActivity.findViewById(android.R.id.content);
         innerContainer = (LinearLayout) containerView.getChildAt(0);
-        testView = (CordovaView) innerContainer.getChildAt(0);
+        testView = (CordovaWebView) innerContainer.getChildAt(0);
         
     }
     

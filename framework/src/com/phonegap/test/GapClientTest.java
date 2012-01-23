@@ -1,7 +1,7 @@
 package com.phonegap.test;
 
-import com.phonegap.CordovaView;
-import com.phonegap.GapClient;
+import com.phonegap.CordovaWebView;
+import com.phonegap.CordovaChromeClient;
 import com.phonegap.api.PluginManager;
 import com.phonegap.test.activities.PhoneGapViewTestActivity;
 
@@ -20,7 +20,7 @@ public class GapClientTest extends ActivityInstrumentationTestCase2<PhoneGapView
 	private LinearLayout innerContainer;
 	private View testView;
 	private String rString;
-	private GapClient appCode;
+	private CordovaChromeClient appCode;
 
 	public GapClientTest() {
 		super("com.phonegap.test.activities",PhoneGapViewTestActivity.class);
@@ -32,7 +32,7 @@ public class GapClientTest extends ActivityInstrumentationTestCase2<PhoneGapView
 		containerView = (FrameLayout) testActivity.findViewById(android.R.id.content);
 		innerContainer = (LinearLayout) containerView.getChildAt(0);
 		testView = innerContainer.getChildAt(0);
-		appCode = ((CordovaView) testView).getGapClient();
+		appCode = ((CordovaWebView) testView).getGapClient();
 		
 	}
 	

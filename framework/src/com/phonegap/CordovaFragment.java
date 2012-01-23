@@ -28,7 +28,7 @@ import android.view.ViewGroup;
  * The WebView is automically paused or resumed when the Fragment is paused or resumed.
  */
 public class CordovaFragment extends Fragment {
-    private CordovaView mWebView;
+    private CordovaWebView mWebView;
     private boolean mIsWebViewAvailable;
 
     public CordovaFragment() {
@@ -43,7 +43,7 @@ public class CordovaFragment extends Fragment {
         if (mWebView != null) {
             mWebView.destroy();
         }
-        mWebView = new CordovaView(getActivity());
+        mWebView = new CordovaWebView(getActivity());
         mIsWebViewAvailable = true;
         return mWebView;
     }
@@ -91,7 +91,7 @@ public class CordovaFragment extends Fragment {
     /**
      * Gets the WebView.
      */
-    public CordovaView getCordovaView() {
+    public CordovaWebView getCordovaView() {
         return mIsWebViewAvailable ? mWebView : null;
     }
 }

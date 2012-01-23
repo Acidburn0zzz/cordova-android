@@ -25,11 +25,11 @@ import android.webkit.WebView;
 import android.webkit.WebSettings.LayoutAlgorithm;
 
 
-public class CordovaView extends WebView {
+public class CordovaWebView extends WebView {
 
     private static final String TAG = null;
-    GapClient appCode;
-    CordovaClient viewClient;
+    CordovaChromeClient appCode;
+    CordovaWebViewClient viewClient;
     Activity app;
     private boolean classicRender;
     private ArrayList<Pattern> whiteList = new ArrayList<Pattern>();
@@ -43,7 +43,7 @@ public class CordovaView extends WebView {
     protected int loadUrlTimeout = 0;
 
     
-    public CordovaView(Context context)
+    public CordovaWebView(Context context)
     {
         super(context);
         app = (Activity) context;
@@ -51,32 +51,32 @@ public class CordovaView extends WebView {
         this.setVisibility(View.INVISIBLE);
     }
     
-    public CordovaView(Context context, AttributeSet attrs)
+    public CordovaWebView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
         app = (Activity) context;
         init();
     }
     
-    public CordovaView(Context context, AttributeSet attrs, int defStyle)
+    public CordovaWebView(Context context, AttributeSet attrs, int defStyle)
     {
         super(context, attrs, defStyle);
         app = (Activity) context;
         init();
     }
     
-    public CordovaView(Context context, AttributeSet attrs, int defStyle,
+    public CordovaWebView(Context context, AttributeSet attrs, int defStyle,
             boolean privateBrowsing) {
         super(context, attrs, defStyle, privateBrowsing);
         init();
     }
     
-    public GapClient getGapClient()
+    public CordovaChromeClient getGapClient()
     {
         return appCode;
     }
     
-    public CordovaClient getCordovaClient()
+    public CordovaWebViewClient getCordovaClient()
     {
         return viewClient;
     }
@@ -128,8 +128,8 @@ public class CordovaView extends WebView {
         settings.setGeolocationEnabled(true);
         
         //Initalize the other parts of the application
-        appCode = new GapClient(this, this.getContext());
-        viewClient = new CordovaClient(app, this);
+        appCode = new CordovaChromeClient(this, this.getContext());
+        viewClient = new CordovaWebViewClient(app, this);
         
     }
 
@@ -326,7 +326,7 @@ public class CordovaView extends WebView {
         if (!url.startsWith("javascript:")) {
             LOG.d(TAG, "DroidGap.loadUrl(%s, %d)", url, time);
         }
-        final CordovaView me = this;
+        final CordovaWebView me = this;
 
         // Handle activity parameters if we're using the activity!
         app.runOnUiThread(new Runnable() {
@@ -384,7 +384,7 @@ public class CordovaView extends WebView {
         }
         
         // Load URL on UI thread
-        final CordovaView me = this;
+        final CordovaWebView me = this;
         app.runOnUiThread(new Runnable() {
             public void run() {
                 

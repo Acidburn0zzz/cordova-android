@@ -34,19 +34,19 @@ import android.webkit.WebView;
 import android.webkit.GeolocationPermissions.Callback;
 import android.widget.EditText;
 
-public class GapClient extends WebChromeClient implements CordovaInterface {
+public class CordovaChromeClient extends WebChromeClient implements CordovaInterface {
     private String TAG = "PhoneGapLog";
     private long MAX_QUOTA = 100 * 1024 * 1024;
     Activity mCtx;
     PluginManager pluginManager;
     CallbackServer callbackServer;
-    CordovaView appView;
+    CordovaWebView appView;
     private IPlugin activityResultCallback;
     private boolean activityResultKeepRunning;
     private boolean keepRunning;
     private boolean bound;
 
-    public GapClient(CordovaView view, Context ctx)
+    public CordovaChromeClient(CordovaWebView view, Context ctx)
     {
         mCtx = (Activity) ctx;
         callbackServer = new CallbackServer();
@@ -59,12 +59,12 @@ public class GapClient extends WebChromeClient implements CordovaInterface {
      * This is created for WebDriver Compatibility
      */
     
-    public GapClient(Activity testActivity) {
+    public CordovaChromeClient(Activity testActivity) {
         mCtx = testActivity;
        
     }
     
-    public void testInit(CordovaView view)
+    public void testInit(CordovaWebView view)
     {
         callbackServer = new CallbackServer();
         appView = view;

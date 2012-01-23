@@ -20,10 +20,10 @@ import com.phonegap.test.activities.CordovaDriverAction;
 /**
  * The webview client receives notifications about appView
  */
-public class CordovaClient extends WebViewClient {
+public class CordovaWebViewClient extends WebViewClient {
 
     Activity ctx;
-    CordovaView appView;
+    CordovaWebView appView;
     String TAG = "PhoneGapClient";
     private boolean firstRunComplete = false;
     private String lastUrl;
@@ -33,7 +33,7 @@ public class CordovaClient extends WebViewClient {
      * 
      * @param ctx
      */
-    public CordovaClient(Activity ctx, CordovaView appCode) {
+    public CordovaWebViewClient(Activity ctx, CordovaWebView appCode) {
         this.ctx = ctx;
         this.appView = appCode;
         appCode.setWebViewClient(this);
@@ -43,11 +43,11 @@ public class CordovaClient extends WebViewClient {
      * Utility methods for WebDriver
      */
     
-    public CordovaClient(Activity testActivity) {
+    public CordovaWebViewClient(Activity testActivity) {
         this.ctx = testActivity;
     }
     
-    public void setCordovaView(CordovaView view)
+    public void setCordovaView(CordovaWebView view)
     {
         this.appView = view;
     }

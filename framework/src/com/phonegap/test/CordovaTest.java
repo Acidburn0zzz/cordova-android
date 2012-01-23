@@ -1,6 +1,6 @@
 package com.phonegap.test;
 
-import com.phonegap.CordovaView;
+import com.phonegap.CordovaWebView;
 import com.phonegap.api.PluginManager;
 import com.phonegap.test.activities.PhoneGapViewTestActivity;
 import com.phonegap.R;
@@ -35,7 +35,7 @@ public class CordovaTest extends ActivityInstrumentationTestCase2<PhoneGapViewTe
 	}
 	
 	public void testForPluginManager() {
-	    CordovaView v = (CordovaView) testView;
+	    CordovaWebView v = (CordovaWebView) testView;
 	    PluginManager p = v.getPluginManager();
 	    assertNotNull(p);
 	    String className = p.getClass().getSimpleName();
@@ -43,12 +43,12 @@ public class CordovaTest extends ActivityInstrumentationTestCase2<PhoneGapViewTe
 	}
 
 	public void testBackButton() {
-	    CordovaView v = (CordovaView) testView;
+	    CordovaWebView v = (CordovaWebView) testView;
 	    assertFalse(v.checkBackKey());
 	}
 	
 	public void testLoadUrl() {
-	    CordovaView v = (CordovaView) testView;
+	    CordovaWebView v = (CordovaWebView) testView;
 	    v.loadUrlIntoView("file:///android_asset/index.html");
 	    sleep();
 	    String url = v.getUrl();
@@ -59,7 +59,7 @@ public class CordovaTest extends ActivityInstrumentationTestCase2<PhoneGapViewTe
 	
 	public void testBackHistoryFalse() {
 	    this.testLoadUrl();
-        CordovaView v = (CordovaView) testView;
+        CordovaWebView v = (CordovaWebView) testView;
         //Move back in the history
         boolean test = v.backHistory();
         assertFalse(test);
@@ -69,7 +69,7 @@ public class CordovaTest extends ActivityInstrumentationTestCase2<PhoneGapViewTe
 	public void testBackHistoryTrue()
 	{
 	    this.testLoadUrl();
-        CordovaView v = (CordovaView) testView;
+        CordovaWebView v = (CordovaWebView) testView;
         v.loadUrlIntoView("file:///android_asset/compass/index.html");
         sleep();
         String url = v.getUrl();

@@ -1,6 +1,6 @@
 package com.phonegap.test;
 
-import com.phonegap.CordovaView;
+import com.phonegap.CordovaWebView;
 import com.phonegap.api.PluginManager;
 import com.phonegap.test.activities.PhoneGapViewTestActivity;
 
@@ -38,7 +38,7 @@ public class PluginManagerTest extends ActivityInstrumentationTestCase2<PhoneGap
 	
 	
 	public void testForPluginManager() {
-	    CordovaView v = (CordovaView) testView;
+	    CordovaWebView v = (CordovaWebView) testView;
 	    pMan = v.getPluginManager();
 	    assertNotNull(pMan);
 	    String className = pMan.getClass().getSimpleName();

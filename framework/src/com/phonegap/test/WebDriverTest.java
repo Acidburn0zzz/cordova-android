@@ -1,8 +1,8 @@
 package com.phonegap.test;
 
-import com.phonegap.CordovaClient;
-import com.phonegap.CordovaView;
-import com.phonegap.GapClient;
+import com.phonegap.CordovaWebViewClient;
+import com.phonegap.CordovaWebView;
+import com.phonegap.CordovaChromeClient;
 import com.phonegap.api.PluginManager;
 import com.phonegap.test.activities.CordovaDriverAction;
 import com.phonegap.R;
@@ -18,10 +18,10 @@ public class WebDriverTest extends ActivityInstrumentationTestCase2<CordovaDrive
 	
 	private static final long TIMEOUT = 1000;
     private CordovaDriverAction testActivity;
-	private CordovaView testView;
+	private CordovaWebView testView;
     private CordovaViewFactory viewFactory;
-    private GapClient appCode;
-    private CordovaClient viewHandler;
+    private CordovaChromeClient appCode;
+    private CordovaWebViewClient viewHandler;
     private AndroidWebDriver testDriver;
 
 	public WebDriverTest() {
@@ -32,10 +32,10 @@ public class WebDriverTest extends ActivityInstrumentationTestCase2<CordovaDrive
 		super.setUp();
 		testActivity = this.getActivity();
 		viewFactory = new CordovaViewFactory();
-		appCode = new GapClient(testActivity);
-		viewHandler = new CordovaClient(testActivity);
+		appCode = new CordovaChromeClient(testActivity);
+		viewHandler = new CordovaWebViewClient(testActivity);
 		testDriver = new AndroidWebDriver(testActivity, viewFactory, viewHandler, appCode);
-		testView = (CordovaView) testDriver.getWebView();
+		testView = (CordovaWebView) testDriver.getWebView();
 		viewHandler.setCordovaView(testView);
 		appCode.testInit(testView);
 	}

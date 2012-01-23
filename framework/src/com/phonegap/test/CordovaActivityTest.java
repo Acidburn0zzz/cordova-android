@@ -1,6 +1,6 @@
 package com.phonegap.test;
 
-import com.phonegap.CordovaView;
+import com.phonegap.CordovaWebView;
 import com.phonegap.api.PluginManager;
 import com.phonegap.test.activities.PhoneGapActivity;
 
@@ -13,7 +13,7 @@ public class CordovaActivityTest extends ActivityInstrumentationTestCase2<PhoneG
     private PhoneGapActivity testActivity;
     private FrameLayout containerView;
     private LinearLayout innerContainer;
-    private CordovaView testView;
+    private CordovaWebView testView;
     
     public CordovaActivityTest()
     {
@@ -25,7 +25,7 @@ public class CordovaActivityTest extends ActivityInstrumentationTestCase2<PhoneG
         testActivity = this.getActivity();
         containerView = (FrameLayout) testActivity.findViewById(android.R.id.content);
         innerContainer = (LinearLayout) containerView.getChildAt(0);
-        testView = (CordovaView) innerContainer.getChildAt(0);
+        testView = (CordovaWebView) innerContainer.getChildAt(0);
         
     }
     
@@ -46,7 +46,7 @@ public class CordovaActivityTest extends ActivityInstrumentationTestCase2<PhoneG
     }
     
     public void testForPluginManager() {
-        CordovaView v = (CordovaView) testView;
+        CordovaWebView v = (CordovaWebView) testView;
         PluginManager p = v.getPluginManager();
         assertNotNull(p);
         String className = p.getClass().getSimpleName();
