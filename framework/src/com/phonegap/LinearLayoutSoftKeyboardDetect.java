@@ -58,6 +58,38 @@ class LinearLayoutSoftKeyboardDetect extends LinearLayout {
            LOG.v(TAG, "Old Width = %d", oldWidth);
            LOG.v(TAG, "Width = %d", width);
 
+        // If the oldHeight = 0 then this is the first measure event as the app starts up.
+        // If oldHeight == height then we got a measurement change that doesn't affect us.
+        if (oldHeight == 0 || oldHeight == height) {
+            LOG.d(TAG, "Ignore this event");
+        }
+        // Account for orientation change and ignore this event/Fire orientation change
+        else if(screenHeight == width)
+        {
+            int tmp_var = screenHeight;
+            screenHeight = screenWidth;
+            screenWidth = tmp_var;
+            LOG.v(TAG, "Orientation Change");
+        }
+        // If the height as gotten bigger then we will assume the soft keyboard has 
+        // gone away.
+        else if (height > oldHeight) {
+            if(app != null)
+                app.sendJavascript("PhoneGap.fireDocumentEvent('hidekeyboard');");
+        } 
+        // If the height as gotten smaller then we will assume the soft keyboard has 
+        // been displayed.
+        else if (height < oldHeight) {
+            if(app != null)
+                app.sendJavascript("PhoneGap.fireDocumentEvent('showkeyboard');");
+        }
+
+        // Update the old height for the next event
+        oldHeight = height;
+        oldWidth = width;
+    }
+>>>>>>> Changing to use JS directly. There are issues with this approach, and it should use the KeyboardHandler
+
            // If the oldHeight = 0 then this is the first measure event as the app starts up.
            // If oldHeight == height then we got a measurement change that doesn't affect us.
            if (oldHeight == 0 || oldHeight == height) {
