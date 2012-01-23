@@ -83,9 +83,8 @@ class LinearLayoutSoftKeyboardDetect extends LinearLayout {
                LOG.v(TAG, "Throw show keyboard event");
                app.sendJavascript("PhoneGap.fireDocumentEvent('showkeyboard');");
            }
-
            // Update the old height for the next event
            oldHeight = height;
            oldWidth = width;
        }
-
+}
