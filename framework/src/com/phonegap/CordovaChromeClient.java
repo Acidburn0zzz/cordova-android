@@ -118,7 +118,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
         dlg.create();
         dlg.show();
         return true;
-    }
+    }       
 
     /**
      * Tell the client to display a confirm dialog to the user.
@@ -191,7 +191,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
         boolean reqOk = false;
 //        if (url.startsWith("file://") || isUrlWhiteListed(url)) {
         if (url.startsWith("file://")) {
-            reqOk = true;
+           reqOk = true;
         }
         
         // Calling PluginManager.exec() to call a native service using 
@@ -205,7 +205,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
                 String callbackId = array.getString(2);
                 boolean async = array.getBoolean(3);
                 String r = pluginManager.exec(service, action, callbackId, message, async);
-                result.confirm(r);
+               result.confirm(r);
             } catch (JSONException e) {
                 e.printStackTrace();
             }
@@ -213,8 +213,8 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
         
         // Polling for JavaScript messages 
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_poll:")) {
-            String r = callbackServer.getJavascript();
-            result.confirm(r);
+           String r = callbackServer.getJavascript();
+           result.confirm(r);
         }
         
         // Calling into CallbackServer
@@ -231,15 +231,15 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
             }
             else if (message.equals("getToken")) {
                 r = callbackServer.getToken();
-            }
+           }
             result.confirm(r);
         }
         
         // PhoneGap JS has initialized, so show webview
         // (This solves white flash seen when rendering HTML)
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_init:")) {
-            appView.setVisibility(View.VISIBLE);
-            result.confirm("OK");
+           appView.setVisibility(View.VISIBLE);
+           result.confirm("OK");
         }
 
         // Show dialog
@@ -271,7 +271,6 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
         }
         return true;
     }
-    
     
     /**
      * Handle database quota exceeded notification.
@@ -466,6 +465,5 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
     public void reinit(String url) {
         callbackServer.reinit(url);
     }
-
 
 }
