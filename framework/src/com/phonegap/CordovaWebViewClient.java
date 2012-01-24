@@ -205,17 +205,16 @@ public class CordovaWebViewClient extends WebViewClient {
     @Override
     public void onPageFinished(WebView view, String url) {
         super.onPageFinished(view, url);
-       /* 
+        
         String baseUrl = url.split("#")[0];
         if(!lastUrl.equals(baseUrl) && firstRunComplete)
         {
             this.appView.reinit(url);
         }
         firstRunComplete  = true;
-       */ 
-
+       
         // Clear timeout flag
-        this.ctx.loadUrlTimeout++;
+        //this.loadUrlTimeout++;
 
         // Try firing the onNativeReady event in JS. If it fails because the JS is
         // not loaded yet then just set a flag so that the onNativeReady can be fired

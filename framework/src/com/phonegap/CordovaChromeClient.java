@@ -467,4 +467,8 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
         callbackServer.reinit(url);
     }
 
+    public Context getApplicationContext() {
+      return mCtx.getApplicationContext();
+    }
+
 }

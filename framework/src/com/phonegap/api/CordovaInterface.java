@@ -119,4 +119,6 @@ public interface CordovaInterface {
     public abstract void showWebPage(String url, boolean openExternal,
             boolean clearHistory, HashMap<String, Object> params);
 
+    public abstract Context getApplicationContext();
+
 }

@@ -10,6 +10,7 @@ framework/bin
 framework/test/com/phonegap/*.class
 framework/assets/www/.DS_Store
 framework/assets/www/phonegap-*.js
+test/bin
 example
 tmp
 *.tmp
