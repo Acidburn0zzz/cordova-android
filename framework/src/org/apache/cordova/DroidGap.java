@@ -480,6 +480,11 @@ public class DroidGap extends Activity {
         this.backgroundColor = this.getIntegerProperty("backgroundColor", Color.BLACK);
         this.root.setBackgroundColor(this.backgroundColor);
        // Send pause event to JavaScript
+        if (this.appView == null) {
+            return;
+        }
+
+        // Send pause event to JavaScript
         this.appView.loadUrl("javascript:try{require('cordova/channel').onPause.fire();}catch(e){console.log('exception firing pause event from native');};");
 
         // Forward to plugins
@@ -691,7 +696,6 @@ public class DroidGap extends Activity {
                 this.appView.loadUrl("javascript:require('cordova').fireDocumentEvent('backbutton');");
                  return true;
              }
-
              // If not bound
              else {
 
