@@ -202,7 +202,7 @@ public class App extends Plugin {
         Class c = app.getClass().getSuperclass();
         if(c.getName().contains("CordovaActivity"))
         {
-            ((CordovaActivity) app).endActivity();
+            ((DroidGap) app).endActivity();
         }
         else
         {

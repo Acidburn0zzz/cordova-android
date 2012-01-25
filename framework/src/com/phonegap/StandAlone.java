@@ -20,7 +20,7 @@ package com.phonegap;
 
 import android.os.Bundle;
 
-public class StandAlone extends CordovaActivity {
+public class StandAlone extends DroidGap {
 	
 	@Override
 	public void onCreate(Bundle savedInstanceState) {

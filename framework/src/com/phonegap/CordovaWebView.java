@@ -173,14 +173,6 @@ public class CordovaWebView extends WebView {
                         LOG.setLogLevel(level);
                     }
                 }
-                else if(strNode.equals("render")) {
-                    String enabled = xml.getAttributeValue(null, "enabled");
-                    if(enabled != null)
-                    {
-                        this.classicRender = enabled.equals("true");
-                    }
-                    
-                }
                 else if (strNode.equals("preference")) {
                   String name = xml.getAttributeValue(null, "name");
                   String value = xml.getAttributeValue(null, "value");
@@ -360,7 +352,7 @@ public class CordovaWebView extends WebView {
             public void run() {
                 String className = app.getClass().getSuperclass().getName();
                 if(className.contains("CordovaActivity"))
-                    ((CordovaActivity)app).handleActivityParameters();
+                    ((DroidGap)app).handleActivityParameters();
             }
         });
 
@@ -422,7 +414,7 @@ public class CordovaWebView extends WebView {
                 String className = app.getClass().getSuperclass().getName();
                 if(className.contains("Cordova"))
                 {
-                    CordovaActivity properApp = (CordovaActivity) app;
+                    DroidGap properApp = (DroidGap) app;
                     properApp.handleActivityParameters();
                     
                     // If loadingDialog property, then show the App loading dialog for first page of app

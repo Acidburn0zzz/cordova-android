@@ -46,8 +46,6 @@ public class CordovaWebViewClient extends WebViewClient {
         appCode.setWebViewClient(this);
     }
     
-    
-
     /**
      * Sets the authentication token.
      * 
@@ -297,12 +295,13 @@ public class CordovaWebViewClient extends WebViewClient {
         super.onPageFinished(view, url);
         
         String baseUrl = url.split("#")[0];
-        if(!lastUrl.equals(baseUrl) && firstRunComplete)
+        if(firstRunComplete && !lastUrl.equals(baseUrl))
         {
             this.appView.reinit(url);
         }
         firstRunComplete  = true;
-       
+        lastUrl = baseUrl;
+        
         // Clear timeout flag
         //this.loadUrlTimeout++;
 

@@ -18,7 +18,7 @@ class LinearLayoutSoftKeyboardDetect extends LinearLayout {
        private int oldWidth = 0; // Need to save old width for orientation change          
        private int screenWidth = 0;
        private int screenHeight = 0;
-       private CordovaActivity app = null;
+       private DroidGap app = null;
                    
        public LinearLayoutSoftKeyboardDetect(Context context, int width, int height) {
            super(context);     
@@ -26,7 +26,7 @@ class LinearLayoutSoftKeyboardDetect extends LinearLayout {
            screenHeight = height;
            if(context.getClass().getSimpleName().equals("CordovaActivity"))
            {
-               app = (CordovaActivity) context;
+               app = (DroidGap) context;
            }
        }
 
