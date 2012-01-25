@@ -327,8 +327,9 @@ public class FileUtils extends Plugin {
      * @throws InvalidModificationException
      * @throws EncodingException
      * @throws JSONException
+     * @throws FileExistsException 
      */
-    private JSONObject transferTo(String fileName, JSONObject newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException {
+    private JSONObject transferTo(String fileName, JSONObject newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException, FileExistsException {
         // Check for invalid file name
         if (newName != null && newName.contains(":")) {
             throw new EncodingException("Bad file name");

@@ -32,7 +32,7 @@ public class CordovaWebView extends WebView {
     CordovaWebViewClient viewClient;
     Activity app;
     private boolean classicRender;
-    private ArrayList<Pattern> whiteList = new ArrayList<Pattern>();
+    private ArrayList<Pattern> whiteList = null;
     private HashMap<String, Boolean> whiteListCache = new HashMap<String,Boolean>();
     String url = null;
     Stack<String> urls = new Stack<String>();
@@ -41,6 +41,8 @@ public class CordovaWebView extends WebView {
     private boolean cancelLoadUrl;
     protected long loadUrlTimeoutValue = 20000;
     protected int loadUrlTimeout = 0;
+    // preferences read from phonegap.xml
+    protected PreferenceSet preferences;
 
     
     public CordovaWebView(Context context)
@@ -49,12 +51,21 @@ public class CordovaWebView extends WebView {
         app = (Activity) context;
         //Set the view as invisible when we create it, then bring it out when we load the URL
         this.setVisibility(View.INVISIBLE);
+        whiteList = new ArrayList<Pattern>();
+    }
+    
+    public CordovaWebView(Context context, ArrayList<Pattern> wList, PreferenceSet prefs)
+    {
+      super(context);
+      whiteList = wList;
+      preferences = prefs;
     }
     
     public CordovaWebView(Context context, AttributeSet attrs)
     {
         super(context, attrs);
         app = (Activity) context;
+        whiteList = new ArrayList<Pattern>();
         init();
     }
     
@@ -62,6 +73,7 @@ public class CordovaWebView extends WebView {
     {
         super(context, attrs, defStyle);
         app = (Activity) context;
+        whiteList = new ArrayList<Pattern>();
         init();
     }
     
@@ -135,6 +147,8 @@ public class CordovaWebView extends WebView {
 
     
     private void loadConfiguration() {
+      if(preferences == null)
+      {
         int id = app.getResources().getIdentifier("phonegap", "xml", app.getPackageName());
         if (id == 0) {
             LOG.i("PhoneGapLog", "phonegap.xml missing. Ignoring...");
@@ -167,6 +181,18 @@ public class CordovaWebView extends WebView {
                     }
                     
                 }
+                else if (strNode.equals("preference")) {
+                  String name = xml.getAttributeValue(null, "name");
+                  String value = xml.getAttributeValue(null, "value");
+                  String readonlyString = xml.getAttributeValue(null, "readonly");
+
+                  boolean readonly = (readonlyString != null &&
+                                      readonlyString.equals("true"));
+
+                  LOG.i("PhoneGapLog", "Found preference for %s", name);
+
+                  preferences.add(new PreferenceNode(name, value, readonly));
+              }
                 
             }
             try {
@@ -177,6 +203,7 @@ public class CordovaWebView extends WebView {
                 e.printStackTrace();
             }
         }
+      }
     }
 
 

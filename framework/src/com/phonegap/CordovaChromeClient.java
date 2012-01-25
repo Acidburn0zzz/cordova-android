@@ -9,7 +9,6 @@ import com.phonegap.api.IPlugin;
 import com.phonegap.api.LOG;
 import com.phonegap.api.CordovaInterface;
 import com.phonegap.api.PluginManager;
-import com.phonegap.test.activities.CordovaDriverAction;
 
 import android.app.Activity;
 import android.app.AlertDialog;

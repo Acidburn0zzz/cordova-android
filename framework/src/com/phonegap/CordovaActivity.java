@@ -8,6 +8,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Pattern;
+
+import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
 import android.app.AlertDialog;
@@ -15,6 +18,7 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
@@ -29,6 +33,7 @@ import android.view.WindowManager;
 import android.widget.LinearLayout;
 import com.phonegap.LinearLayoutSoftKeyboardDetect;
 import com.phonegap.api.IPlugin;
+import com.phonegap.api.LOG;
 import com.phonegap.api.PluginManager;
 
 public class CordovaActivity extends Activity {
@@ -48,11 +53,30 @@ public class CordovaActivity extends Activity {
     // This is not the same as calling super.loadSplashscreen(url)
     protected int splashscreen = 0;
     private ProgressDialog spinnerDialog;
+    private PreferenceSet preferences;
+    private ArrayList<Pattern> whiteList = new ArrayList<Pattern>();
+    private String TAG = "Cordova";
+    
     
     @Override
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        
+        preferences = new PreferenceSet();
+
+        // Load PhoneGap configuration:
+        //      white list of allowed URLs
+        //      debug setting
+        this.loadConfiguration();
+
+        if (preferences.prefMatches("fullscreen","true")) {
+          getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                  WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        } else {
+          getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN,
+                  WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        }
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
@@ -77,6 +101,106 @@ public class CordovaActivity extends Activity {
         pluginManager = appView.appCode.pluginManager;
     }
     
+    /**
+     * Load PhoneGap configuration from res/xml/phonegap.xml.
+     * Approved list of URLs that can be loaded into DroidGap
+     *    <access origin="http://server regexp" subdomains="true" />
+     * Log level: ERROR, WARN, INFO, DEBUG, VERBOSE (default=ERROR)
+     *      <log level="DEBUG" />
+     */
+    private void loadConfiguration() {
+        int id = getResources().getIdentifier("phonegap", "xml", getPackageName());
+        if (id == 0) {
+            LOG.i("PhoneGapLog", "phonegap.xml missing. Ignoring...");
+            return;
+        }
+        XmlResourceParser xml = getResources().getXml(id);
+        int eventType = -1;
+        while (eventType != XmlResourceParser.END_DOCUMENT) {
+            if (eventType == XmlResourceParser.START_TAG) {
+                String strNode = xml.getName();
+                if (strNode.equals("access")) {
+                    String origin = xml.getAttributeValue(null, "origin");
+                    String subdomains = xml.getAttributeValue(null, "subdomains");
+                    if (origin != null) {
+                        this.addWhiteListEntry(origin, (subdomains != null) && (subdomains.compareToIgnoreCase("true") == 0));
+                    }
+                }
+                else if (strNode.equals("log")) {
+                    String level = xml.getAttributeValue(null, "level");
+                    LOG.i("PhoneGapLog", "Found log level %s", level);
+                    if (level != null) {
+                        LOG.setLogLevel(level);
+                    }
+                }
+               else if(strNode.equals("render")) {
+                    String enabled = xml.getAttributeValue(null, "enabled");
+                    if(enabled != null)
+                    {
+                        //this.classicRender = enabled.equals("true");
+                    }
+                }
+                else if (strNode.equals("preference")) {
+                    String name = xml.getAttributeValue(null, "name");
+                    String value = xml.getAttributeValue(null, "value");
+                    String readonlyString = xml.getAttributeValue(null, "readonly");
+
+                    boolean readonly = (readonlyString != null &&
+                                        readonlyString.equals("true"));
+
+                    LOG.i("PhoneGapLog", "Found preference for %s", name);
+
+                    preferences.add(new PreferenceNode(name, value, readonly));
+                }
+            }
+            try {
+                eventType = xml.next();
+            } catch (XmlPullParserException e) {
+                e.printStackTrace();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
+    }
+    
+
+    /**
+     * Add entry to approved list of URLs (whitelist)
+     * 
+     * @param origin        URL regular expression to allow
+     * @param subdomains    T=include all subdomains under origin
+     */
+    private void addWhiteListEntry(String origin, boolean subdomains) {
+      try {
+        // Unlimited access to network resources
+        if(origin.compareTo("*") == 0) {
+            LOG.d(TAG , "Unlimited access to network resources");
+            whiteList.add(Pattern.compile(".*"));
+        } else { // specific access
+          // check if subdomains should be included
+          // TODO: we should not add more domains if * has already been added
+          if (subdomains) {
+              // XXX making it stupid friendly for people who forget to include protocol/SSL
+              if(origin.startsWith("http")) {
+                whiteList.add(Pattern.compile(origin.replaceFirst("https?://", "^https?://(.*\\.)?")));
+              } else {
+                whiteList.add(Pattern.compile("^https?://(.*\\.)?"+origin));
+              }
+              LOG.d(TAG, "Origin to allow with subdomains: %s", origin);
+          } else {
+              // XXX making it stupid friendly for people who forget to include protocol/SSL
+              if(origin.startsWith("http")) {
+                whiteList.add(Pattern.compile(origin.replaceFirst("https?://", "^https?://")));
+              } else {
+                whiteList.add(Pattern.compile("^https?://"+origin));
+              }
+              LOG.d(TAG, "Origin to allow: %s", origin);
+          }    
+        }
+      } catch(Exception e) {
+        LOG.d(TAG, "Failed to add origin %s", origin);
+      }
+    }
 
     @Override
     /**
