@@ -1,11 +1,12 @@
 package com.phonegap.test.activities;
 
 import com.phonegap.CordovaActivity;
+import com.phonegap.DroidGap;
 
 import android.app.Activity;
 import android.os.Bundle;
 
-public class JailActivity extends CordovaActivity {
+public class JailActivity extends DroidGap {
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {

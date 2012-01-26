@@ -236,7 +236,7 @@ public class CordovaWebView extends WebView {
         LOG.d(TAG, "Failed to add origin %s", origin);
       }
     }
-    
+
 
     /**
      * Determine if URL is in approved list of URLs to load.
