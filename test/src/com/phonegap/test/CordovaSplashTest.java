@@ -2,7 +2,6 @@ package com.phonegap.test;
 
 import com.phonegap.CordovaWebView;
 import com.phonegap.api.PluginManager;
-import com.phonegap.test.activities.PhoneGapSplash;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.widget.FrameLayout;

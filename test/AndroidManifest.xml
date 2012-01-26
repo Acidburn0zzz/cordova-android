@@ -37,7 +37,7 @@
 
     <instrumentation
         android:name="android.test.InstrumentationTestRunner"
-        android:targetPackage="com.adobe.phoneGapView" />
+        android:targetPackage="com.phonegap.test" />
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -47,7 +47,7 @@
             android:windowSoftInputMode="adjustPan"
             android:label="@string/app_name" 
             android:configChanges="orientation|keyboardHidden"
-            android:name="com.phonegap.test.activities.PhoneGapViewTestActivity" >
+            android:name=".PhoneGapViewTestActivity" >
             <intent-filter >
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -57,27 +57,7 @@
             android:windowSoftInputMode="adjustPan"
             android:label="@string/app_name" 
             android:configChanges="orientation|keyboardHidden"
-            android:name="com.phonegap.test.activities.JailActivity" >
-            <intent-filter >
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.SAMPLE_CODE" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:windowSoftInputMode="adjustPan"
-            android:label="@string/app_name" 
-            android:configChanges="orientation|keyboardHidden"
-            android:name="com.phonegap.test.activities.CordovaDriverAction" >
-            <intent-filter >
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.SAMPLE_CODE" />
-            </intent-filter>
-        </activity>
-        <activity
-            android:windowSoftInputMode="adjustPan"
-            android:label="@string/app_name" 
-            android:configChanges="orientation|keyboardHidden"
-            android:name="com.phonegap.test.activities.PhoneGapSplash" >
+            android:name="com.phonegap.test.JailActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.SAMPLE_CODE" />
@@ -87,7 +67,27 @@
             android:windowSoftInputMode="adjustPan"
             android:label="@string/app_name" 
             android:configChanges="orientation|keyboardHidden"
-            android:name="com.phonegap.test.activities.PhoneGapActivity" >
+            android:name=".CordovaDriverAction" >
+            <intent-filter >
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.SAMPLE_CODE" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:windowSoftInputMode="adjustPan"
+            android:label="@string/app_name" 
+            android:configChanges="orientation|keyboardHidden"
+            android:name="com.phonegap.test.PhoneGapSplash" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.SAMPLE_CODE" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:windowSoftInputMode="adjustPan"
+            android:label="@string/app_name" 
+            android:configChanges="orientation|keyboardHidden"
+            android:name=".PhoneGapActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.SAMPLE_CODE" />

@@ -4,8 +4,7 @@ import com.phonegap.CordovaWebViewClient;
 import com.phonegap.CordovaWebView;
 import com.phonegap.CordovaChromeClient;
 import com.phonegap.api.PluginManager;
-import com.phonegap.test.activities.CordovaDriverAction;
-import com.phonegap.R;
+import com.phonegap.test.R;
 
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;

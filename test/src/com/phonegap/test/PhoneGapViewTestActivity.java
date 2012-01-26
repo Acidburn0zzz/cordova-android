@@ -1,12 +1,12 @@
-package com.phonegap.test.activities;
+package com.phonegap.test;
 
 import com.phonegap.CordovaWebView;
-import com.phonegap.R;
 
 import android.app.Activity;
 import android.os.Bundle;
 
-public class PhoneGapSplash extends Activity {
+public class PhoneGapViewTestActivity extends Activity {
+    
     CordovaWebView phoneGap;
     /** Called when the activity is first created. */
     @Override
@@ -15,7 +15,9 @@ public class PhoneGapSplash extends Activity {
         setContentView(R.layout.main);
         
         phoneGap = (CordovaWebView) findViewById(R.id.phoneGapView);
-        phoneGap.loadUrl("file:///android_asset/index.html", 5000);
+        
+        phoneGap.loadUrl("file:///android_asset/index.html");
+        
     }
     
     public void onDestroy()

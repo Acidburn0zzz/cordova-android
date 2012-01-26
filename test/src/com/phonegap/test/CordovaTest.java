@@ -2,8 +2,7 @@ package com.phonegap.test;
 
 import com.phonegap.CordovaWebView;
 import com.phonegap.api.PluginManager;
-import com.phonegap.test.activities.PhoneGapViewTestActivity;
-import com.phonegap.R;
+import com.phonegap.test.R;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;

@@ -3,7 +3,6 @@ package com.phonegap.test;
 import com.phonegap.CordovaWebView;
 import com.phonegap.CordovaChromeClient;
 import com.phonegap.api.PluginManager;
-import com.phonegap.test.activities.PhoneGapViewTestActivity;
 
 import android.content.Context;
 import android.content.res.AssetManager;

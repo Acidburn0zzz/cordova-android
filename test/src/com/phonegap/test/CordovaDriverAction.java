@@ -1,4 +1,4 @@
-package com.phonegap.test.activities;
+package com.phonegap.test;
 
 import android.app.Activity;
 import android.os.Bundle;
