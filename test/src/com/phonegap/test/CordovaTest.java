@@ -30,7 +30,7 @@ public class CordovaTest extends ActivityInstrumentationTestCase2<PhoneGapViewTe
 	
 	public void testForCordovaView() {
 	    String className = testView.getClass().getSimpleName();
-	    assertTrue(className.equals("CordovaView"));
+	    assertTrue(className.equals("CordovaWebView"));
 	}
 	
 	public void testForPluginManager() {

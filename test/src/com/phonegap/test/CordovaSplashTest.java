@@ -36,7 +36,7 @@ public class CordovaSplashTest extends ActivityInstrumentationTestCase2<PhoneGap
 
     public void testForCordovaView() {
         String className = testView.getClass().getSimpleName();
-        assertTrue(className.equals("CordovaView"));
+        assertTrue(className.equals("CordovaWebView"));
     }
     
     public void testForPluginManager() {

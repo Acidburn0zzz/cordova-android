@@ -32,7 +32,7 @@ public class PluginManagerTest extends ActivityInstrumentationTestCase2<PhoneGap
 	
 	public void testPreconditions(){
 	    assertNotNull(innerContainer);
-		assertNotNull(testView);
+	    assertNotNull(testView);
 	}
 	
 	

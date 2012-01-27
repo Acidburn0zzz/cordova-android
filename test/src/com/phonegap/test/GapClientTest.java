@@ -42,7 +42,7 @@ public class GapClientTest extends ActivityInstrumentationTestCase2<PhoneGapView
 	
 	public void testForCordovaView() {
 	    String className = testView.getClass().getSimpleName();
-	    assertTrue(className.equals("CordovaView"));
+	    assertTrue(className.equals("CordovaWebView"));
 	}
 	
 	public void testGetResources() {

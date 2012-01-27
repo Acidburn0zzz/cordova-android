@@ -13,7 +13,7 @@ public class JailTest extends ActivityInstrumentationTestCase2<JailActivity> {
     private FrameLayout containerView;
     private LinearLayout innerContainer;
     private CordovaWebView testView;
-    private static final long TIMEOUT = 1000;
+    private static final long TIMEOUT = 2000;
 
     public JailTest()
     {
@@ -37,10 +37,11 @@ public class JailTest extends ActivityInstrumentationTestCase2<JailActivity> {
 
     public void testForCordovaView() {
         String className = testView.getClass().getSimpleName();
-        assertTrue(className.equals("CordovaView"));
+        assertTrue(className.equals("CordovaWebView"));
     }
     
     public void testForJailedItems() {
+        sleep();
         String url = testView.getUrl();
         assertTrue(url.contains("file:///data/data/"));
     }
