@@ -12,6 +12,7 @@ import java.util.regex.Pattern;
 
 import org.xmlpull.v1.XmlPullParserException;
 
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -448,7 +449,7 @@ public class DroidGap extends Activity {
         catch (IOException e)
         {
             //return fail;
-            Log.d("CordoaActivity", "Unable to find assets");
+            LOG.d("CordoaActivity", "Unable to find assets");
         }
         for(int i = 0; i < fileList.size(); ++i)
         {
@@ -477,7 +478,7 @@ public class DroidGap extends Activity {
             }
             catch (IOException e)
             {
-                Log.d("CordovaActivity", "Unable to copy files");
+                LOG.d("CordovaActivity", "Unable to copy files");
             }
         }
     }
