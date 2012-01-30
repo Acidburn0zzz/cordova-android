@@ -88,7 +88,7 @@ public class FileUtils extends Plugin {
      * @param args          JSONArry of arguments for the plugin.
      * @param callbackId    The callback id used when calling back into JavaScript.
      * @return              A PluginResult object with a status and message.
-     */
+    */
     public PluginResult execute(String action, JSONArray args, String callbackId) {
         PluginResult.Status status = PluginResult.Status.OK;
         String result = "";
@@ -101,7 +101,7 @@ public class FileUtils extends Plugin {
                     return new PluginResult(status, b);
                 }
                 else if (action.equals("getFreeDiskSpace")) {
-                    long l = DirectoryManager.getFreeDiskSpace();
+                   long l = DirectoryManager.getFreeDiskSpace(false);
                     return new PluginResult(status, l);
                 }
                 else if (action.equals("testFileExists")) {
@@ -131,7 +131,7 @@ public class FileUtils extends Plugin {
                 else if (action.equals("requestFileSystem")) {
                     long size = args.optLong(1);
                     if (size != 0) {
-                        if (size > (DirectoryManager.getFreeDiskSpace()*1024)) {
+                       if (size > (DirectoryManager.getFreeDiskSpace(true)*1024)) {
                             JSONObject error = new JSONObject().put("code", FileUtils.QUOTA_EXCEEDED_ERR);
                             return new PluginResult(PluginResult.Status.ERROR, error);
                         }
@@ -330,7 +330,7 @@ public class FileUtils extends Plugin {
      * @throws FileExistsException 
      */
     private JSONObject transferTo(String fileName, JSONObject newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException, FileExistsException {
-        // Check for invalid file name
+       // Check for invalid file name
         if (newName != null && newName.contains(":")) {
             throw new EncodingException("Bad file name");
         }
@@ -481,8 +481,7 @@ public class FileUtils extends Plugin {
      * @param destinationDir
      * @return
      */
-
-    private boolean isCopyOnItself(String src, String dest) {
+   private boolean isCopyOnItself(String src, String dest) {
 
         // This weird test is to determine if we are copying or moving a directory into itself.
         // Copy /sdcard/myDir to /sdcard/myDir-backup is okay but
@@ -491,10 +490,255 @@ public class FileUtils extends Plugin {
             return true;
         }
 
+       return false;
+    }
+
+    /**
+     * Move a file
+     *
+     * @param srcFile file to be copied
+     * @param destFile destination to be copied to
+     * @return a FileEntry object
+     * @throws IOException
+     * @throws InvalidModificationException
+     * @throws JSONException
+     */
+    private JSONObject moveFile(File srcFile, File destFile) throws JSONException, InvalidModificationException {
+        // Renaming a file to an existing directory should fail
+        if (destFile.exists() && destFile.isDirectory()) {
+            throw new InvalidModificationException("Can't rename a file to a directory");
+        }
+
+        // Try to rename the file
+        if (!srcFile.renameTo(destFile)) {
+            // Trying to rename the file failed.  Possibly because we moved across file system on the device.
+            // Now we have to do things the hard way
+            // 1) Copy all the old file
+            // 2) delete the src file
+        }
+
+        return getEntry(destFile);
+    }
+
+    /**
+     * Move a directory
+     *
+     * @param srcDir directory to be copied
+     * @param destinationDir destination to be copied to
+     * @return a DirectoryEntry object
+     * @throws JSONException
+     * @throws IOException
+     * @throws InvalidModificationException
+     */
+    private JSONObject moveDirectory(File srcDir, File destinationDir) throws JSONException, InvalidModificationException {
+        // Renaming a file to an existing directory should fail
+        if (destinationDir.exists() && destinationDir.isFile()) {
+            throw new InvalidModificationException("Can't rename a file to a directory");
+        }
+
+        // Check to make sure we are not copying the directory into itself
+        if (isCopyOnItself(srcDir.getAbsolutePath(), destinationDir.getAbsolutePath())) {
+            throw new InvalidModificationException("Can't move itself into itself");
+        }
+
+        // If the destination directory already exists and is empty then delete it.  This is according to spec.
+        if (destinationDir.exists()) {
+            if (destinationDir.list().length > 0) {
+                throw new InvalidModificationException("directory is not empty");
+            }
+        }
+
+        // Try to rename the directory
+        if (!srcDir.renameTo(destinationDir)) {
+            // Trying to rename the directory failed.  Possibly because we moved across file system on the device.
+            // Now we have to do things the hard way
+            // 1) Copy all the old files
+            // 2) delete the src directory
+        }
+
+        return getEntry(destinationDir);
+    }
+
+    /**
+     * Deletes a directory and all of its contents, if any. In the event of an error
+     * [e.g. trying to delete a directory that contains a file that cannot be removed],
+     * some of the contents of the directory may be deleted.
+     * It is an error to attempt to delete the root directory of a filesystem.
+     *
+     * @param filePath the directory to be removed
+     * @return a boolean representing success of failure
+     * @throws FileExistsException
+     */
+    private boolean removeRecursively(String filePath) throws FileExistsException {
+        File fp = new File(filePath);
+
+        // You can't delete the root directory.
+        if (atRootDirectory(filePath)) {
+            return false;
+        }
+
+        return removeDirRecursively(fp);
+    }
+
+    /**
+     * Loops through a directory deleting all the files.
+     *
+     * @param directory to be removed
+     * @return a boolean representing success of failure
+     * @throws FileExistsException
+     */
+    private boolean removeDirRecursively(File directory) throws FileExistsException {
+        if (directory.isDirectory()) {
+            for (File file : directory.listFiles()) {
+                removeDirRecursively(file);
+            }
+        }
+
+        if (!directory.delete()) {
+            throw new FileExistsException("could not delete: " + directory.getName());
+        } else {
+            return true;
+        }
+    }
+
+    /**
+     * Deletes a file or directory. It is an error to attempt to delete a directory that is not empty.
+     * It is an error to attempt to delete the root directory of a filesystem.
+     *
+     * @param filePath file or directory to be removed
+     * @return a boolean representing success of failure
+     * @throws NoModificationAllowedException
+     * @throws InvalidModificationException
+     */
+    private boolean remove(String filePath) throws NoModificationAllowedException, InvalidModificationException {
+        File fp = new File(filePath);
+
+        // You can't delete the root directory.
+        if (atRootDirectory(filePath)) {
+            throw new NoModificationAllowedException("You can't delete the root directory");
+        }
+
+        // You can't delete a directory that is not empty
+        if (fp.isDirectory() && fp.list().length > 0) {
+            throw new InvalidModificationException("You can't delete a directory that is not empty.");
+        }
+
+        return fp.delete();
+    }
+
+    /**
+     * Creates or looks up a file.
+     *
+     * @param dirPath base directory
+     * @param fileName file/directory to lookup or create
+     * @param options specify whether to create or not
+     * @param directory if true look up directory, if false look up file
+     * @return a Entry object
+     * @throws FileExistsException
+     * @throws IOException
+     * @throws TypeMismatchException
+     * @throws EncodingException
+     * @throws JSONException
+     */
+    private JSONObject getFile(String dirPath, String fileName, JSONObject options, boolean directory) throws FileExistsException, IOException, TypeMismatchException, EncodingException, JSONException {
+        boolean create = false;
+        boolean exclusive = false;
+        if (options != null) {
+            create = options.optBoolean("create");
+            if (create) {
+                exclusive = options.optBoolean("exclusive");
+            }
+        }
+
+        // Check for a ":" character in the file to line up with BB and iOS
+        if (fileName.contains(":")) {
+            throw new EncodingException("This file has a : in it's name");
+        }
+
+        File fp = createFileObject(dirPath, fileName);
+
+        if (create) {
+            if (exclusive && fp.exists()) {
+                throw new FileExistsException("create/exclusive fails");
+            }
+            if (directory) {
+                fp.mkdir();
+            } else {
+                fp.createNewFile();
+            }
+            if (!fp.exists()) {
+                throw new FileExistsException("create fails");
+            }
+        }
+        else {
+            if (!fp.exists()) {
+                throw new FileNotFoundException("path does not exist");
+            }
+            if (directory) {
+                if (fp.isFile()) {
+                    throw new TypeMismatchException("path doesn't exist or is file");
+                }
+            } else {
+                if (fp.isDirectory()) {
+                    throw new TypeMismatchException("path doesn't exist or is directory");
+                }
+            }
+        }
+
+        // Return the directory
+        return getEntry(fp);
+    }
+
+    /**
+     * If the path starts with a '/' just return that file object. If not construct the file
+     * object from the path passed in and the file name.
+     *
+     * @param dirPath root directory
+     * @param fileName new file name
+     * @return
+     */
+    private File createFileObject(String dirPath, String fileName) {
+        File fp = null;
+        if (fileName.startsWith("/")) {
+            fp = new File(fileName);
+        } else {
+            fp = new File(dirPath + File.separator + fileName);
+        }
+        return fp;
+    }
+
+    /**
+     * Look up the parent DirectoryEntry containing this Entry.
+     * If this Entry is the root of its filesystem, its parent is itself.
+     *
+     * @param filePath
+     * @return
+     * @throws JSONException
+     */
+    private JSONObject getParent(String filePath) throws JSONException {
+        if (atRootDirectory(filePath)) {
+            return getEntry(filePath);
+        }
+        return getEntry(new File(filePath).getParent());
+    }
+
+    /**
+     * Checks to see if we are at the root directory.  Useful since we are
+     * not allow to delete this directory.
+     *
+     * @param filePath to directory
+     * @return true if we are at the root, false otherwise.
+     */
+    private boolean atRootDirectory(String filePath) {
+        if (filePath.equals(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/" + ctx.getPackageName() + "/cache") ||
+                filePath.equals(Environment.getExternalStorageDirectory().getAbsolutePath())) {
+            return true;
+        }
         return false;
     }
 
     /**
+<<<<<<< HEAD
      * Move a file
      *
      * @param srcFile file to be copied
@@ -796,34 +1040,29 @@ public class FileUtils extends Plugin {
     private JSONObject requestFileSystem(int type) throws IOException, JSONException {
         JSONObject fs = new JSONObject();
         if (type == TEMPORARY) {
+           File fp;
+            fs.put("name", "temporary");
             if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                fs.put("name", "temporary");
                 fs.put("root", getEntry(Environment.getExternalStorageDirectory().getAbsolutePath() +
                         "/Android/data/" + ctx.getPackageName() + "/cache/"));
 
                 // Create the cache dir if it doesn't exist.
-                File fp = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
+                fp = new File(Environment.getExternalStorageDirectory().getAbsolutePath() +
                     "/Android/data/" + ctx.getPackageName() + "/cache/");
-                fp.mkdirs();
             } else {
-                throw new IOException("SD Card not mounted");
+                fs.put("root", getEntry("/data/data/" + ctx.getPackageName() + "/cache/"));
+                // Create the cache dir if it doesn't exist.
+                fp = new File("/data/data/" + ctx.getPackageName() + "/cache/");
             }
+            fp.mkdirs();
         }
         else if (type == PERSISTENT) {
+            fs.put("name", "persistent");
             if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
-                fs.put("name", "persistent");
                 fs.put("root", getEntry(Environment.getExternalStorageDirectory()));
             } else {
-                throw new IOException("SD Card not mounted");
+                fs.put("root", getEntry("/data/data/" + ctx.getPackageName()));
             }
-        }
-        else if (type == RESOURCE) {
-            fs.put("name", "resource");
-
-        }
-        else if (type == APPLICATION) {
-            fs.put("name", "application");
-
         }
         else {
             throw new IOException("No filesystem of type requested");
@@ -868,7 +1107,7 @@ public class FileUtils extends Plugin {
      *
      * @param action    The action to execute
      * @return          T=returns value
-     */
+    */
     public boolean isSynch(String action) {
         if (action.equals("testSaveLocationExists")) {
             return true;

@@ -1,3 +1,22 @@
+/*
+       Licensed to the Apache Software Foundation (ASF) under one
+       or more contributor license agreements.  See the NOTICE file
+       distributed with this work for additional information
+       regarding copyright ownership.  The ASF licenses this file
+       to you under the Apache License, Version 2.0 (the
+       "License"); you may not use this file except in compliance
+       with the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing,
+       software distributed under the License is distributed on an
+       "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+       KIND, either express or implied.  See the License for the
+       specific language governing permissions and limitations
+       under the License.
+*/
+
 package com.phonegap;
 
 import java.util.HashMap;
@@ -75,7 +94,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
         pluginManager.onDestroy();
     }
     
-    /**
+   /**
      * Tell the client to display a javascript alert dialog.
      * 
      * @param view
@@ -86,7 +105,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
     @Override
     public boolean onJsAlert(WebView view, String url, String message, final JsResult result) {
         AlertDialog.Builder dlg = new AlertDialog.Builder(this.mCtx);
-        dlg.setMessage(message);
+       dlg.setMessage(message);
         dlg.setTitle("Alert");
         //Don't let alerts break the back button
         dlg.setCancelable(true);
@@ -191,7 +210,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
 //        if (url.startsWith("file://") || isUrlWhiteListed(url)) {
         if (url.startsWith("file://")) {
            reqOk = true;
-        }
+       }
         
         // Calling PluginManager.exec() to call a native service using 
         // prompt(this.stringify(args), "gap:"+this.stringify([service, action, callbackId, true]));
@@ -205,7 +224,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
                 boolean async = array.getBoolean(3);
                 String r = pluginManager.exec(service, action, callbackId, message, async);
                result.confirm(r);
-            } catch (JSONException e) {
+           } catch (JSONException e) {
                 e.printStackTrace();
             }
         }
@@ -214,7 +233,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_poll:")) {
            String r = callbackServer.getJavascript();
            result.confirm(r);
-        }
+       }
         
         // Calling into CallbackServer
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_callbackServer:")) {
@@ -231,7 +250,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
             else if (message.equals("getToken")) {
                 r = callbackServer.getToken();
            }
-            result.confirm(r);
+           result.confirm(r);
         }
         
         // PhoneGap JS has initialized, so show webview
@@ -239,7 +258,7 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_init:")) {
            appView.setVisibility(View.VISIBLE);
            result.confirm("OK");
-        }
+       }
 
         // Show dialog
         else {
@@ -469,5 +488,4 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
     public Context getApplicationContext() {
       return mCtx.getApplicationContext();
     }
-
 }

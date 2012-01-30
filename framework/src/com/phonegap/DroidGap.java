@@ -12,7 +12,6 @@ import java.util.regex.Pattern;
 
 import org.xmlpull.v1.XmlPullParserException;
 
-import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.ProgressDialog;
 import android.content.DialogInterface;
@@ -21,7 +20,6 @@ import android.content.res.AssetManager;
 import android.content.res.XmlResourceParser;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.util.Log;
 import android.view.Display;
 import android.view.KeyEvent;
 import android.view.Menu;
@@ -83,10 +81,16 @@ public class DroidGap extends Activity {
                   WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
         }
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN,
-                WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
-        // This builds the view.  We could probably get away with NOT having a LinearLayout, but I like having a bucket!
 
+        if (preferences.prefMatches("fullscreen","true")) {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        } else {
+            getWindow().setFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN,
+                    WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
+        }
+
+        // This builds the view.  We could probably get away with NOT having a LinearLayout, but I like having a bucket!
         Display display = getWindowManager().getDefaultDisplay(); 
         int width = display.getWidth();
         int height = display.getHeight();
@@ -154,7 +158,6 @@ public class DroidGap extends Activity {
                                         readonlyString.equals("true"));
 
                     LOG.i("PhoneGapLog", "Found preference for %s", name);
-
                     preferences.add(new PreferenceNode(name, value, readonly));
                 }
             }

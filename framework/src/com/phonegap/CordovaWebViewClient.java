@@ -1,7 +1,25 @@
+/*
+       Licensed to the Apache Software Foundation (ASF) under one
+       or more contributor license agreements.  See the NOTICE file
+       distributed with this work for additional information
+       regarding copyright ownership.  The ASF licenses this file
+       to you under the Apache License, Version 2.0 (the
+       "License"); you may not use this file except in compliance
+       with the License.  You may obtain a copy of the License at
+
+         http://www.apache.org/licenses/LICENSE-2.0
+
+       Unless required by applicable law or agreed to in writing,
+       software distributed under the License is distributed on an
+       "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+       KIND, either express or implied.  See the License for the
+       specific language governing permissions and limitations
+       under the License.
+*/
+
 package com.phonegap;
 
 import java.util.Hashtable;
-
 import android.app.Activity;
 import com.phonegap.api.LOG;
 
@@ -35,7 +53,7 @@ public class CordovaWebViewClient extends WebViewClient {
     private Hashtable<String, AuthenticationToken> authenticationTokens = new Hashtable<String, AuthenticationToken>();
     
     
-    /**
+   /**
      * Constructor.
      * 
      * @param ctx
@@ -143,7 +161,7 @@ public class CordovaWebViewClient extends WebViewClient {
     }
 
    /**
-     * Give the host application a chance to take over the control when a new url 
+    * Give the host application a chance to take over the control when a new url 
      * is about to be loaded in the current WebView.
      * 
      * @param view          The WebView that is initiating the callback.
@@ -235,7 +253,6 @@ public class CordovaWebViewClient extends WebViewClient {
                 this.ctx.loadUrl(url);
             }
             */
-
             // If not our application, let default viewer handle
             else {
                 try {
@@ -269,7 +286,7 @@ public class CordovaWebViewClient extends WebViewClient {
        
         // get the authentication token
         AuthenticationToken token = getAuthenticationToken(host,realm);
-        
+       
         if(token != null) {
             handler.proceed(token.getUserName(), token.getPassword());
         }
@@ -309,7 +326,7 @@ public class CordovaWebViewClient extends WebViewClient {
         // not loaded yet then just set a flag so that the onNativeReady can be fired
         // from the JS side when the JS gets to that code.
         if (!url.equals("about:blank")) {
-            appView.loadUrl("javascript:try{ PhoneGap.onNativeReady.fire();}catch(e){_nativeReady = true;}");
+           appView.loadUrl("javascript:try{ PhoneGap.onNativeReady.fire();}catch(e){_nativeReady = true;}");
         }
 
         // Make app visible after 2 sec in case there was a JS error and PhoneGap JS never initialized correctly
@@ -322,7 +339,7 @@ public class CordovaWebViewClient extends WebViewClient {
                             public void run() {
                                 appView.setVisibility(View.VISIBLE);
                            }
-                        });
+                       });
                     } catch (InterruptedException e) {
                     }
                 }
@@ -339,7 +356,7 @@ public class CordovaWebViewClient extends WebViewClient {
             //((Object) ctx).endActivity();
             ctx.finish();
        }
-    }
+   }
     
     /**
      * Report an error to the host application. These errors are unrecoverable (i.e. the main resource is unavailable). 
@@ -363,7 +380,7 @@ public class CordovaWebViewClient extends WebViewClient {
         // Handle error
         //((Object) ctx).onReceivedError(errorCode, description, failingUrl);
    }
-    
+   
     public void onReceivedSslError(WebView view, SslErrorHandler handler, SslError error) {
         
         final String packageName = this.ctx.getPackageName();
@@ -378,7 +395,7 @@ public class CordovaWebViewClient extends WebViewClient {
             } else {
                 // debug = false
                super.onReceivedSslError(view, handler, error);    
-            }
+           }
         } catch (NameNotFoundException e) {
             // When it doubt, lock it out!
             super.onReceivedSslError(view, handler, error);
