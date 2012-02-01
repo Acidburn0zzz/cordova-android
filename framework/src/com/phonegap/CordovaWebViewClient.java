@@ -298,7 +298,7 @@ public class CordovaWebViewClient extends WebViewClient {
 
         // Clear history so history.back() doesn't do anything.  
         // So we can reinit() native side CallbackServer & PluginManager.
-        view.clearHistory(); 
+        //view.clearHistory(); 
     }
     
     /**
