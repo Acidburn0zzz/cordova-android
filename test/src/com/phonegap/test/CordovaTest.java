@@ -59,7 +59,6 @@ public class CordovaTest extends
   }
 
   public void testBackHistoryFalse() {
-    this.testLoadUrl();
     CordovaWebView v = (CordovaWebView) testView;
     // Move back in the history
     boolean test = v.backHistory();
@@ -70,16 +69,16 @@ public class CordovaTest extends
   public void testBackHistoryTrue() {
     this.testLoadUrl();
     CordovaWebView v = (CordovaWebView) testView;
-    v.loadUrlIntoView("file:///android_asset/compass/index.html");
+    v.loadUrlIntoView("file:///android_asset/www/compass/index.html");
     sleep();
     String url = v.getUrl();
-    assertTrue(url.equals("file:///android_asset/compass/index.html"));
+    assertTrue(url.equals("file:///android_asset/www/compass/index.html"));
     // Move back in the history
     boolean test = v.backHistory();
     assertTrue(test);
     sleep();
     url = v.getUrl();
-    assertTrue(url.equals("file:///android_asset/index.html"));
+    assertTrue(url.equals("file:///android_asset/www/index.html"));
   }
 
   private void sleep() {
