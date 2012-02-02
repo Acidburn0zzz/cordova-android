@@ -79,7 +79,6 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
     
     public CordovaChromeClient(Activity testActivity) {
         mCtx = testActivity;
-       
     }
     
     public void testInit(CordovaWebView view)

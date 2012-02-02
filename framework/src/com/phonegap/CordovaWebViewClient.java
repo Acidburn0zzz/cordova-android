@@ -320,7 +320,7 @@ public class CordovaWebViewClient extends WebViewClient {
         lastUrl = baseUrl;
         
         // Clear timeout flag
-        //this.loadUrlTimeout++;
+        this.appView.loadUrlTimeout++;
 
         // Try firing the onNativeReady event in JS. If it fails because the JS is
         // not loaded yet then just set a flag so that the onNativeReady can be fired

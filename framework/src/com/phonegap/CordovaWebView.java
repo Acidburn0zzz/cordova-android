@@ -66,7 +66,6 @@ public class CordovaWebView extends WebView {
         super(context, attrs);
         app = (Activity) context;
         whiteList = new ArrayList<Pattern>();
-        init();
     }
     
     public CordovaWebView(Context context, AttributeSet attrs, int defStyle)
@@ -74,13 +73,13 @@ public class CordovaWebView extends WebView {
         super(context, attrs, defStyle);
         app = (Activity) context;
         whiteList = new ArrayList<Pattern>();
-        init();
     }
     
     public CordovaWebView(Context context, AttributeSet attrs, int defStyle,
             boolean privateBrowsing) {
         super(context, attrs, defStyle, privateBrowsing);
-        init();
+        app = (Activity) context;
+        whiteList = new ArrayList<Pattern>();
     }
     
     public CordovaChromeClient getGapClient()
