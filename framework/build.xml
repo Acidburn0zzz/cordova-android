@@ -152,11 +152,7 @@
          that includes all JavaScript code.
     -->
     <target name="jar" depends="build-javascript, -compile">
-<<<<<<< HEAD
-      <jar jarfile="phonegap-${version}.jar" basedir="bin/classes" excludes="com/phonegap/R.class,com/phonegap/R$*.class,com/phonegap/test/*,com/phonegap/test/activities/*"/>
-=======
-      <jar jarfile="cordova-${version}.jar" basedir="bin/classes" excludes="org/apache/cordova/R.class,org/apache/cordova/R$*.class"/>
->>>>>>> 77547f882635d02dc41eee97bff26641b737fa6a
+     <jar jarfile="cordova-${version}.jar" basedir="bin/classes" excludes="org/apache/cordova/R.class,org/apache/cordova/R$*.class"/>
     </target>
 
     <!-- tests for Java files -->
@@ -188,21 +184,7 @@
         </junit>
     </target>
 
-<<<<<<< HEAD
-    <!-- tests for Java files -->
-    <property name="test.dir" location="test/com/phonegap" />
-
-    <path id="test.classpath">
-        <!-- requires both junit and phonegap -->
-        <pathelement location="libs/junit-4.10.jar" />
-        <pathelement location="phonegap-${version}.jar" />
-        <pathelement location="${test.dir}" />
-    </path>
-
-    <target name="phonegap_debug" depends="build-javascript, debug">
-=======
-    <target name="cordova_debug" depends="build-javascript, debug">
->>>>>>> 77547f882635d02dc41eee97bff26641b737fa6a
+   <target name="cordova_debug" depends="build-javascript, debug">
     </target>
 
     <target name="cordova_release" depends="build-javascript, release">
