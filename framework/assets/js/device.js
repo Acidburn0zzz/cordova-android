@@ -17,8 +17,8 @@
  *     under the License.
  */
 
-if (!PhoneGap.hasResource("device")) {
-PhoneGap.addResource("device");
+if (!Cordova.hasResource("device")) {
+Cordova.addResource("device");
 
 /**
  * This represents the mobile device, and provides properties for inspecting the model, version, UUID of the
@@ -26,12 +26,12 @@ PhoneGap.addResource("device");
  * @constructor
  */
 var Device = function() {
-    this.available = PhoneGap.available;
+    this.available = Cordova.available;
     this.platform = null;
     this.version = null;
     this.name = null;
     this.uuid = null;
-    this.phonegap = null;
+    this.cordova = null;
 
     var me = this;
     this.getInfo(
@@ -41,13 +41,13 @@ var Device = function() {
             me.version = info.version;
             me.name = info.name;
             me.uuid = info.uuid;
-            me.phonegap = info.phonegap;
-            PhoneGap.onPhoneGapInfoReady.fire();
+            me.cordova = info.cordova;
+            Cordova.onCordovaInfoReady.fire();
         },
         function(e) {
             me.available = false;
-            console.log("Error initializing PhoneGap: " + e);
-            alert("Error initializing PhoneGap: "+e);
+            console.log("Error initializing Cordova: " + e);
+            alert("Error initializing Cordova: "+e);
         });
 };
 
@@ -72,43 +72,10 @@ Device.prototype.getInfo = function(successCallback, errorCallback) {
     }
 
     // Get info
-    PhoneGap.exec(successCallback, errorCallback, "Device", "getDeviceInfo", []);
+    Cordova.exec(successCallback, errorCallback, "Device", "getDeviceInfo", []);
 };
 
-/*
- * DEPRECATED
- * This is only for Android.
- *
- * You must explicitly override the back button.
- */
-Device.prototype.overrideBackButton = function() {
-	console.log("Device.overrideBackButton() is deprecated.  Use App.overrideBackbutton(true).");
-	navigator.app.overrideBackbutton(true);
-};
-
-/*
- * DEPRECATED
- * This is only for Android.
- *
- * This resets the back button to the default behaviour
- */
-Device.prototype.resetBackButton = function() {
-	console.log("Device.resetBackButton() is deprecated.  Use App.overrideBackbutton(false).");
-	navigator.app.overrideBackbutton(false);
-};
-
-/*
- * DEPRECATED
- * This is only for Android.
- *
- * This terminates the activity!
- */
-Device.prototype.exitApp = function() {
-	console.log("Device.exitApp() is deprecated.  Use App.exitApp().");
-	navigator.app.exitApp();
-};
-
-PhoneGap.addConstructor(function() {
+Cordova.addConstructor(function() {
     if (typeof navigator.device === "undefined") {
         navigator.device = window.device = new Device();
     }
