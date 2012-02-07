@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-cordova>
+<cordova>
     <!--  
     access elements control the Android whitelist.  
     Domains are assumed blocked unless set otherwise
