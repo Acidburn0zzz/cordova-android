@@ -34,8 +34,6 @@ import org.apache.cordova.api.IPlugin;
 import org.apache.cordova.api.LOG;
 import org.apache.cordova.api.CordovaInterface;
 import org.apache.cordova.api.PluginManager;
-import org.json.JSONArray;
-import org.json.JSONException;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.app.Activity;
@@ -44,10 +42,12 @@ import android.app.ProgressDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
+import android.content.res.Configuration;
 import android.content.res.XmlResourceParser;
 import android.database.Cursor;
-import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.media.AudioManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Display;
@@ -58,6 +58,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.WebSettings;
+import android.webkit.WebSettings.LayoutAlgorithm;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.LinearLayout;
 
 
@@ -168,7 +172,6 @@ public class DroidGap extends Activity {
     private ArrayList<Pattern> whiteList = new ArrayList<Pattern>();
     private String TAG = "Cordova";
 
-    
     
     @Override
     public void onCreate(Bundle savedInstanceState)
