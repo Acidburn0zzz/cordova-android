@@ -1,10 +1,10 @@
-package com.phonegap.test;
+package org.apache.cordova.test;
 
-import com.phonegap.CordovaWebViewClient;
-import com.phonegap.CordovaWebView;
-import com.phonegap.CordovaChromeClient;
-import com.phonegap.test.CordovaViewFactory;
+import org.apache.cordova.CordovaWebViewClient;
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.CordovaChromeClient;
 
+import org.apache.cordova.test.CordovaViewFactory;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.android.library.AndroidWebDriver;

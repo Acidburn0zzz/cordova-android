@@ -1,23 +1,22 @@
-package com.phonegap.test;
+package org.apache.cordova.test;
 
-import com.phonegap.CordovaWebView;
+import org.apache.cordova.CordovaWebView;
 import com.phonegap.api.PluginManager;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-public class JailTest extends ActivityInstrumentationTestCase2<JailActivity> {
+public class CordovaActivityTest extends ActivityInstrumentationTestCase2<PhoneGapActivity> {
 
-    private JailActivity testActivity;
+    private PhoneGapActivity testActivity;
     private FrameLayout containerView;
     private LinearLayout innerContainer;
     private CordovaWebView testView;
-    private static final long TIMEOUT = 2000;
-
-    public JailTest()
+    
+    public CordovaActivityTest()
     {
-        super("com.phonegap.test.activities",JailActivity.class);
+        super("com.phonegap.test.activities",PhoneGapActivity.class);
     }
     
     protected void setUp() throws Exception {
@@ -40,23 +39,17 @@ public class JailTest extends ActivityInstrumentationTestCase2<JailActivity> {
         assertTrue(className.equals("CordovaWebView"));
     }
     
-    public void testForJailedItems() {
-        sleep();
-        String url = testView.getUrl();
-        assertTrue(url.contains("file:///data/data/"));
+    public void testForLinearLayout() {
+        String className = innerContainer.getClass().getSimpleName();
+        assertTrue(className.equals("LinearLayoutSoftKeyboardDetect"));
     }
     
-    public void testForJailCheck() {
-       sleep();
-       assertTrue(testActivity.areAssetsInJail());
-    }
-
-    private void sleep() {
-        try {
-            Thread.sleep(TIMEOUT);
-        } catch (InterruptedException e) {
-            fail("Unexpected Timeout");
-        }
+    public void testForPluginManager() {
+        CordovaWebView v = (CordovaWebView) testView;
+        PluginManager p = v.getPluginManager();
+        assertNotNull(p);
+        String className = p.getClass().getSimpleName();
+        assertTrue(className.equals("PluginManager"));
     }
 
 }

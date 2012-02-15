@@ -1,4 +1,4 @@
-package com.phonegap.test;
+package org.apache.cordova.test;
 
 import android.app.Activity;
 import android.os.Bundle;

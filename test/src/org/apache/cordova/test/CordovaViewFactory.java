@@ -1,8 +1,8 @@
-package com.phonegap.test;
+package org.apache.cordova.test;
 
 import org.openqa.selenium.android.library.WebViewFactory;
 
-import com.phonegap.CordovaWebView;
+import org.apache.cordova.CordovaWebView;
 
 import android.app.Activity;
 import android.webkit.WebView;

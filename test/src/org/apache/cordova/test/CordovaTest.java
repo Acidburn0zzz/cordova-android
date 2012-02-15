@@ -1,8 +1,7 @@
-package com.phonegap.test;
+package org.apache.cordova.test;
 
-import com.phonegap.CordovaWebView;
+import org.apache.cordova.CordovaWebView;
 import com.phonegap.api.PluginManager;
-import com.phonegap.test.R;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.view.View;

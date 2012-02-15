@@ -1,8 +1,8 @@
-package com.phonegap.test;
+package org.apache.cordova.test;
 
-import com.phonegap.CordovaWebView;
-import com.phonegap.CordovaChromeClient;
-import com.phonegap.api.PluginManager;
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.CordovaChromeClient;
+import org.apache.cordova.api.PluginManager;
 
 import android.content.Context;
 import android.content.res.AssetManager;

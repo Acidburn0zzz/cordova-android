@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.phonegap.test"
+    package="org.apache.cordova.test"
     android:versionCode="1"
     android:versionName="1.0" >
 
@@ -37,7 +37,7 @@
 
     <instrumentation
         android:name="android.test.InstrumentationTestRunner"
-        android:targetPackage="com.phonegap.test" />
+        android:targetPackage="org.apache.cordova.test" />
 
     <application
         android:icon="@drawable/ic_launcher"
@@ -57,7 +57,7 @@
             android:windowSoftInputMode="adjustPan"
             android:label="@string/app_name" 
             android:configChanges="orientation|keyboardHidden"
-            android:name="com.phonegap.test.JailActivity" >
+            android:name=".JailActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.SAMPLE_CODE" />
@@ -77,7 +77,7 @@
             android:windowSoftInputMode="adjustPan"
             android:label="@string/app_name" 
             android:configChanges="orientation|keyboardHidden"
-            android:name="com.phonegap.test.PhoneGapSplash" >
+            android:name="org.apache.cordova.test.PhoneGapSplash" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.SAMPLE_CODE" />
@@ -87,7 +87,7 @@
             android:windowSoftInputMode="adjustPan"
             android:label="@string/app_name" 
             android:configChanges="orientation|keyboardHidden"
-            android:name=".PhoneGapActivity" >
+            android:name="org.apache.cordova.test.PhoneGapActivity" >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.SAMPLE_CODE" />

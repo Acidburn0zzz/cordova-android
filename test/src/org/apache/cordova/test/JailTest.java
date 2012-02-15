@@ -1,22 +1,23 @@
-package com.phonegap.test;
+package org.apache.cordova.test;
 
-import com.phonegap.CordovaWebView;
-import com.phonegap.api.PluginManager;
+import org.apache.cordova.CordovaWebView;
+import org.apache.cordova.api.PluginManager;
 
 import android.test.ActivityInstrumentationTestCase2;
 import android.widget.FrameLayout;
 import android.widget.LinearLayout;
 
-public class CordovaActivityTest extends ActivityInstrumentationTestCase2<PhoneGapActivity> {
+public class JailTest extends ActivityInstrumentationTestCase2<JailActivity> {
 
-    private PhoneGapActivity testActivity;
+    private JailActivity testActivity;
     private FrameLayout containerView;
     private LinearLayout innerContainer;
     private CordovaWebView testView;
-    
-    public CordovaActivityTest()
+    private static final long TIMEOUT = 2000;
+
+    public JailTest()
     {
-        super("com.phonegap.test.activities",PhoneGapActivity.class);
+        super("com.phonegap.test.activities",JailActivity.class);
     }
     
     protected void setUp() throws Exception {
@@ -39,17 +40,23 @@ public class CordovaActivityTest extends ActivityInstrumentationTestCase2<PhoneG
         assertTrue(className.equals("CordovaWebView"));
     }
     
-    public void testForLinearLayout() {
-        String className = innerContainer.getClass().getSimpleName();
-        assertTrue(className.equals("LinearLayoutSoftKeyboardDetect"));
+    public void testForJailedItems() {
+        sleep();
+        String url = testView.getUrl();
+        assertTrue(url.contains("file:///data/data/"));
     }
     
-    public void testForPluginManager() {
-        CordovaWebView v = (CordovaWebView) testView;
-        PluginManager p = v.getPluginManager();
-        assertNotNull(p);
-        String className = p.getClass().getSimpleName();
-        assertTrue(className.equals("PluginManager"));
+    public void testForJailCheck() {
+       sleep();
+       assertTrue(testActivity.areAssetsInJail());
+    }
+
+    private void sleep() {
+        try {
+            Thread.sleep(TIMEOUT);
+        } catch (InterruptedException e) {
+            fail("Unexpected Timeout");
+        }
     }
 
 }
