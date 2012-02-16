@@ -182,7 +182,7 @@ public class FileUtils extends Plugin {
                     JSONObject error = new JSONObject().put("code", FileUtils.NO_MODIFICATION_ALLOWED_ERR);
                     return new PluginResult(PluginResult.Status.ERROR, error);
                 }
-            }
+           }
             else if (action.equals("moveTo")) {
                 JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), true);
                 return new PluginResult(status, entry);
