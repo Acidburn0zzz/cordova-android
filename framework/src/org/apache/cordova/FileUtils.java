@@ -184,11 +184,11 @@ public class FileUtils extends Plugin {
                 }
            }
             else if (action.equals("moveTo")) {
-                JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), true);
+                JSONObject entry = transferTo(args.getString(0), args.getJSONObject(1), args.optString(2), true);
                 return new PluginResult(status, entry);
             }
             else if (action.equals("copyTo")) {
-                JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), false);
+                JSONObject entry = transferTo(args.getString(0), args.getJSONObject(1), args.optString(2), false);
                 return new PluginResult(status, entry);
             }
             else if (action.equals("readEntries")) {
