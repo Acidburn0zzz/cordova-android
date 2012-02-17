@@ -184,11 +184,11 @@ public class FileUtils extends Plugin {
                 }
             }
             else if (action.equals("moveTo")) {
-                JSONObject entry = transferTo(args.getString(0), args.getJSONObject(1), args.optString(2), true);
+                JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), true);
                 return new PluginResult(status, entry);
             }
             else if (action.equals("copyTo")) {
-                JSONObject entry = transferTo(args.getString(0), args.getJSONObject(1), args.optString(2), false);
+                JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), false);
                 return new PluginResult(status, entry);
             }
             else if (action.equals("readEntries")) {
@@ -280,6 +280,10 @@ public class FileUtils extends Plugin {
      * @throws JSONException
      */
     private JSONArray readEntries(String fileName) throws FileNotFoundException, JSONException {
+        if (fileName.startsWith("file://")) {
+            fileName = fileName.substring(7);
+        }
+
         File fp = new File(fileName);
 
         if (!fp.exists()) {
@@ -314,8 +318,16 @@ public class FileUtils extends Plugin {
      * @throws JSONException
      * @throws FileExistsException 
      */
-    private JSONObject transferTo(String fileName, JSONObject newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException, FileExistsException {
-       // Check for invalid file name
+   private JSONObject transferTo(String fileName, String newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException {
+        if (fileName.startsWith("file://")) {
+            fileName = fileName.substring(7);
+        }
+        if (newParent.startsWith("file://")) {
+            newParent = newParent.substring(7);
+        }
+
+
+        // Check for invalid file name
         if (newName != null && newName.contains(":")) {
             throw new EncodingException("Bad file name");
         }
@@ -327,7 +339,7 @@ public class FileUtils extends Plugin {
             throw new FileNotFoundException("The source does not exist");
         }
 
-        File destinationDir = new File(newParent.getString("fullPath"));
+        File destinationDir = new File(newParent);
         if (!destinationDir.exists()) {
             // The destination does not exist so we should fail.
             throw new FileNotFoundException("The source does not exist");
