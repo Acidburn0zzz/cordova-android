@@ -184,11 +184,11 @@ public class FileUtils extends Plugin {
                 }
            }
             else if (action.equals("moveTo")) {
-                JSONObject entry = transferTo(args.getString(0), args.getJSONObject(1), args.optString(2), true);
+                JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), true);
                 return new PluginResult(status, entry);
             }
             else if (action.equals("copyTo")) {
-                JSONObject entry = transferTo(args.getString(0), args.getJSONObject(1), args.optString(2), false);
+                JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), false);
                 return new PluginResult(status, entry);
             }
             else if (action.equals("readEntries")) {
@@ -318,7 +318,7 @@ public class FileUtils extends Plugin {
      * @throws JSONException
      * @throws FileExistsException 
      */
-   private JSONObject transferTo(String fileName, String newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException {
+    private JSONObject transferTo(String fileName, String newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException {
         if (fileName.startsWith("file://")) {
             fileName = fileName.substring(7);
         }
