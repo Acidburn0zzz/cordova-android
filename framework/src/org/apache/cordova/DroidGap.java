@@ -45,6 +45,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.content.res.XmlResourceParser;
+import android.database.Cursor;
+import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.Display;
@@ -144,7 +146,6 @@ import android.widget.LinearLayout;
  *          ...
  *      </plugins>
  */
-
 public class DroidGap extends Activity {
 
     CordovaWebView appView;
@@ -754,34 +755,8 @@ public class DroidGap extends Activity {
          return true;
      }
 
-     /**
-      * Show the spinner.  Must be called from the UI thread.
-      * 
-      * @param title         Title of the dialog
-      * @param message       The message of the dialog
-      */
-     public void spinnerStart(final String title, final String message) {
-         if (this.spinnerDialog != null) {
-             this.spinnerDialog.dismiss();
-             this.spinnerDialog = null;
-         }
-         final DroidGap me = this;
-         this.spinnerDialog = ProgressDialog.show(DroidGap.this, title , message, true, true, 
-                 new DialogInterface.OnCancelListener() { 
-             public void onCancel(DialogInterface dialog) {
-                 me.spinnerDialog = null;
-             }
-         });
-     }
-
-     /**
-      * Stop spinner.
-      */
-     public void spinnerStop() {
-         if (this.spinnerDialog != null) {
-             this.spinnerDialog.dismiss();
-             this.spinnerDialog = null;
-         }
+    public void setActivityResultCallback(IPlugin plugin) {
+         this.activityResultCallback = plugin;
      }
 
      /**
