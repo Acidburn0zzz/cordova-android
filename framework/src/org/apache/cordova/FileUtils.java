@@ -280,11 +280,7 @@ public class FileUtils extends Plugin {
      * @throws JSONException
      */
     private JSONArray readEntries(String fileName) throws FileNotFoundException, JSONException {
-        if (fileName.startsWith("file://")) {
-            fileName = fileName.substring(7);
-        }
-
-        File fp = new File(fileName);
+        File fp = createFileObject(fileName);
 
         if (!fp.exists()) {
             // The directory we are listing doesn't exist so we should fail.
@@ -319,12 +315,8 @@ public class FileUtils extends Plugin {
      * @throws FileExistsException 
      */
     private JSONObject transferTo(String fileName, String newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException {
-        if (fileName.startsWith("file://")) {
-            fileName = fileName.substring(7);
-        }
-        if (newParent.startsWith("file://")) {
-            newParent = newParent.substring(7);
-        }
+        fileName = stripFileProtocol(fileName);
+        newParent = stripFileProtocol(newParent);
 
 
         // Check for invalid file name
@@ -567,11 +559,7 @@ public class FileUtils extends Plugin {
      * @throws FileExistsException
      */
     private boolean removeRecursively(String filePath) throws FileExistsException {
-        if (filePath.startsWith("file://")) {
-            filePath = filePath.substring(7);
-        }
-
-        File fp = new File(filePath);
+        File fp = createFileObject(filePath);
 
         // You can't delete the root directory.
         if (atRootDirectory(filePath)) {
@@ -612,11 +600,7 @@ public class FileUtils extends Plugin {
      * @throws InvalidModificationException
      */
     private boolean remove(String filePath) throws NoModificationAllowedException, InvalidModificationException {
-        if (filePath.startsWith("file://")) {
-            filePath = filePath.substring(7);
-        }
-
-        File fp = new File(filePath);
+        File fp = createFileObject(filePath);
 
         // You can't delete the root directory.
         if (atRootDirectory(filePath)) {
@@ -707,9 +691,7 @@ public class FileUtils extends Plugin {
         if (fileName.startsWith("/")) {
             fp = new File(fileName);
         } else {
-            if (dirPath.startsWith("file://")) {
-                dirPath = dirPath.substring(7);
-            }
+            dirPath = stripFileProtocol(dirPath);
             fp = new File(dirPath + File.separator + fileName);
         }
         return fp;
@@ -724,9 +706,7 @@ public class FileUtils extends Plugin {
      * @throws JSONException
      */
     private JSONObject getParent(String filePath) throws JSONException {
-        if (filePath.startsWith("file://")) {
-            filePath = filePath.substring(7);
-        }
+        filePath = stripFileProtocol(filePath);
 
         if (atRootDirectory(filePath)) {
             return getEntry(filePath);
@@ -742,9 +722,7 @@ public class FileUtils extends Plugin {
      * @return true if we are at the root, false otherwise.
      */
     private boolean atRootDirectory(String filePath) {
-        if (filePath.startsWith("file://")) {
-            filePath = filePath.substring(7);
-        }
+        filePath = stripFileProtocol(filePath);
 
         if (filePath.equals(Environment.getExternalStorageDirectory().getAbsolutePath() + "/Android/data/" + ctx.getPackageName() + "/cache") ||
                 filePath.equals(Environment.getExternalStorageDirectory().getAbsolutePath()) || 
@@ -756,6 +734,32 @@ public class FileUtils extends Plugin {
 
 
     /**
+     * This method removes the "file://" from the passed in filePath
+     * 
+     * @param filePath to be checked.
+     * @return
+     */
+    private String stripFileProtocol(String filePath) {
+        if (filePath.startsWith("file://")) {
+            filePath = filePath.substring(7);
+        }
+        return filePath;
+    }
+    
+    /**
+     * Create a File object from the passed in path
+     * 
+     * @param filePath
+     * @return
+     */
+    private File createFileObject(String filePath) {
+        filePath = stripFileProtocol(filePath);
+
+        File file = new File(filePath);
+        return file;
+    }
+
+    /**
      * Look up metadata about this entry.
      *
      * @param filePath to entry
@@ -764,11 +768,7 @@ public class FileUtils extends Plugin {
      * @throws JSONException
      */
     private JSONObject getMetadata(String filePath) throws FileNotFoundException, JSONException {
-        if (filePath.startsWith("file://")) {
-            filePath = filePath.substring(7);
-        }
-
-        File file = new File(filePath);
+        File file = createFileObject(filePath);
 
         if (!file.exists()) {
             throw new FileNotFoundException("Failed to find file in getMetadata");
@@ -789,11 +789,7 @@ public class FileUtils extends Plugin {
      * @throws JSONException
      */
     private JSONObject getFileMetadata(String filePath) throws FileNotFoundException, JSONException {
-        if (filePath.startsWith("file://")) {
-            filePath = filePath.substring(7);
-        }
-
-        File file = new File(filePath);
+        File file = createFileObject(filePath);
 
         if (!file.exists()) {
             throw new FileNotFoundException("File: " + filePath + " does not exist.");
@@ -976,9 +972,7 @@ public class FileUtils extends Plugin {
      */
     /**/
     public long write(String filename, String data, int offset) throws FileNotFoundException, IOException {
-        if (filename.startsWith("file://")) {
-            filename = filename.substring(7);
-        }
+        filename = stripFileProtocol(filename);
 
         boolean append = false;
         if (offset > 0) {
@@ -1006,9 +1000,7 @@ public class FileUtils extends Plugin {
      * @throws FileNotFoundException, IOException
      */
     private long truncateFile(String filename, long size) throws FileNotFoundException, IOException {
-        if (filename.startsWith("file://")) {
-            filename = filename.substring(7);
-        }
+        filename = stripFileProtocol(filename);
 
         RandomAccessFile raf = new RandomAccessFile(filename, "rw");
 
@@ -1034,9 +1026,7 @@ public class FileUtils extends Plugin {
             return ctx.getContentResolver().openInputStream(uri);
         }
         else {
-            if (path.startsWith("file://")) {
-                path = path.substring(7);
-            }
+            path = stripFileProtocol(path);
             return new FileInputStream(path);
         }
     }
