@@ -635,7 +635,9 @@ public class DroidGap extends Activity {
             this.appView.loadUrl("about:blank");
 
             // Forward to plugins
-            this.pluginManager.onDestroy();
+            if (this.pluginManager != null) {
+                this.pluginManager.onDestroy();
+            }
         }
         else {
             this.endActivity();
