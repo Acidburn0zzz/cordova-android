@@ -141,7 +141,7 @@ public class Storage extends Plugin {
 
         // If no database path, generate from application package
         if (this.path == null) {
-           this.path = this.ctx.getApplicationContext().getDir("database", Context.MODE_PRIVATE).getPath();
+            this.path = this.ctx.getApplicationContext().getDir("database", Context.MODE_PRIVATE).getPath();
         }
 
         this.dbName = this.path + File.pathSeparator + db + ".db";
@@ -162,7 +162,7 @@ public class Storage extends Plugin {
         try {
             if (isDDL(query)) {
                 this.myDb.execSQL(query);
-                this.sendJavascript("droiddb.completeQuery('" + tx_id + "', '');");
+                this.sendJavascript("require('cordova/plugin/android/storage').completeQuery('" + tx_id + "', '');");
             } 
             else {
                 Cursor myCursor = this.myDb.rawQuery(query, params);
@@ -175,7 +175,7 @@ public class Storage extends Plugin {
             System.out.println("Storage.executeSql(): Error=" +  ex.getMessage());
             
             // Send error message back to JavaScript
-            this.sendJavascript("droiddb.fail('" + ex.getMessage() + "','" + tx_id + "');");
+            this.sendJavascript("require('cordova/plugin/android/storage').fail('" + ex.getMessage() + "','" + tx_id + "');");
         }
     }
 
@@ -233,7 +233,7 @@ public class Storage extends Plugin {
         }
 
         // Let JavaScript know that there are no more rows
-        this.sendJavascript("droiddb.completeQuery('" + tx_id + "', " + result + ");");
+        this.sendJavascript("require('cordova/plugin/android/storage').completeQuery('" + tx_id + "', " + result + ");");
     }
 
 }
