@@ -38,7 +38,7 @@ import android.net.Uri;
  * The Cordova activity abstract class that is extended by DroidGap.
  * It is used to isolate plugin development, and remove dependency on entire Cordova library.
  */
-public interface CordovaInterface {
+public abstract class CordovaInterface extends Activity{
 
     /**
      * @deprecated
@@ -68,13 +68,6 @@ public interface CordovaInterface {
      * @param requestCode		The request code that is passed to callback to identify the activity
      */
     abstract public void startActivityForResult(IPlugin command, Intent intent, int requestCode);
-
-    /**
-     * Launch an activity for which you would not like a result when it finished. 
-     *  
-     * @param intent            The intent to start
-     */
-    abstract public void startActivity(Intent intent);
     
     /**
      * Set the plugin to be called when a sub-activity exits.

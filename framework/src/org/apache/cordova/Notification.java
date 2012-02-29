@@ -209,7 +209,7 @@ public class Notification extends Plugin {
         this.ctx.runOnUiThread(runnable);
     }
 
-    /**
+   /**
      * Builds and shows a native Android confirm dialog with given title, message, buttons.
      * This dialog only shows up to 3 buttons.  Any labels after that will be ignored.
      * The index of the button pressed will be returned to the JavaScript callback identified by callbackId.
@@ -231,7 +231,6 @@ public class Notification extends Plugin {
                 dlg.setMessage(message);
                 dlg.setTitle(title);
                 dlg.setCancelable(false);
-
                 // First button
                 if (fButtons.length > 0) {
                     dlg.setPositiveButton(fButtons[0],

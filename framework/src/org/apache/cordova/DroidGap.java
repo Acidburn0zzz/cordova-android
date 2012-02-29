@@ -151,7 +151,6 @@ import android.widget.LinearLayout;
  *      </plugins>
  */
 public class DroidGap extends Activity {
-
     CordovaWebView appView;
     private LinearLayoutSoftKeyboardDetect root;
     private int backgroundColor = Color.BLACK;
