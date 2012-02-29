@@ -56,7 +56,7 @@ public class ContactManager extends Plugin {
      * @return              A PluginResult object with a status and message.
      */
     public PluginResult execute(String action, JSONArray args, String callbackId) {
-        PluginResult.Status status = PluginResult.Status.OK;
+       PluginResult.Status status = PluginResult.Status.OK;
         String result = "";     
 
         /**

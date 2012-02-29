@@ -834,4 +834,14 @@ public class DroidGap extends Activity {
         appView.appCode.sendJavascript(statement);
     }
 
+    public void bindBackButton(boolean override) {
+      // TODO Auto-generated method stub
+      this.bound = override;
+    }
+
+    public boolean isBackButtonBound() {
+      // TODO Auto-generated method stub
+      return this.bound;
+    }
+
 }
