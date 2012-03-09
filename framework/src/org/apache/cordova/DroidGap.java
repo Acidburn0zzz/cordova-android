@@ -697,7 +697,7 @@ public class DroidGap extends Activity {
          if (keyCode == KeyEvent.KEYCODE_BACK) {
              // If back key is bound, then send event to JavaScript
              if (this.appView.checkBackKey()) {
-                this.appView.loadUrl("javascript:cordova.require('cordova').fireDocumentEvent('backbutton');");
+                this.appView.loadUrl("cordova.fireDocumentEvent('backbutton');");
                  return true;
              }
              // If not bound
@@ -713,16 +713,15 @@ public class DroidGap extends Activity {
                  }
              }
          }
-
         // If menu key
         else if (keyCode == KeyEvent.KEYCODE_MENU) {
-            this.appView.loadUrl("javascript:cordova.require('cordova').fireDocumentEvent('menubutton');");
+            this.appView.loadUrl("javascript:cordova.fireDocumentEvent('menubutton');");
             return super.onKeyDown(keyCode, event);
         }
 
         // If search key
         else if (keyCode == KeyEvent.KEYCODE_SEARCH) {
-            this.appView.loadUrl("javascript:cordova.require('cordova').fireDocumentEvent('searchbutton');");
+            this.appView.loadUrl("javascript:cordova.fireDocumentEvent('searchbutton');");
             return true;
         }
         return activityResultKeepRunning;
