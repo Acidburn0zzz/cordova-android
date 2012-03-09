@@ -487,7 +487,7 @@ public class DroidGap extends Activity {
         }
 
         // Send pause event to JavaScript
-        this.appView.loadUrl("javascript:try{require('cordova/channel').onPause.fire();}catch(e){console.log('exception firing pause event from native');};");
+        this.appView.loadUrl("javascript:try{cordova.require('cordova/channel').onPause.fire();}catch(e){console.log('exception firing pause event from native');};");
 
         // Forward to plugins
         this.pluginManager.onPause(this.keepRunning);
@@ -523,7 +523,7 @@ public class DroidGap extends Activity {
         }
 
         // Send resume event to JavaScript
-        this.appView.loadUrl("javascript:try{require('cordova/channel').onResume.fire();}catch(e){console.log('exception firing resume event from native');};");
+        this.appView.loadUrl("javascript:try{cordova.require('cordova/channel').onResume.fire();}catch(e){console.log('exception firing resume event from native');};");
 
         // Forward to plugins
         this.pluginManager.onResume(this.keepRunning || this.activityResultKeepRunning);
@@ -628,7 +628,7 @@ public class DroidGap extends Activity {
         
         if (this.appView != null) {
             // Send destroy event to JavaScript
-            this.appView.loadUrl("javascript:try{require('cordova/channel').onDestroy.fire();}catch(e){console.log('exception firing destroy event from native');};");
+            this.appView.loadUrl("javascript:try{cordova.require('cordova/channel').onDestroy.fire();}catch(e){console.log('exception firing destroy event from native');};");
 
             // Load blank page so that JavaScript onunload is called
             this.appView.loadUrl("about:blank");
@@ -697,12 +697,11 @@ public class DroidGap extends Activity {
          if (keyCode == KeyEvent.KEYCODE_BACK) {
              // If back key is bound, then send event to JavaScript
              if (this.appView.checkBackKey()) {
-                this.appView.loadUrl("javascript:require('cordova').fireDocumentEvent('backbutton');");
+                this.appView.loadUrl("javascript:cordova.require('cordova').fireDocumentEvent('backbutton');");
                  return true;
              }
              // If not bound
              else {
-
                  // Go to previous page in webview if it is possible to go back
                  if (this.appView.backHistory()) {
                      return true;
@@ -717,13 +716,13 @@ public class DroidGap extends Activity {
 
         // If menu key
         else if (keyCode == KeyEvent.KEYCODE_MENU) {
-            this.appView.loadUrl("javascript:require('cordova').fireDocumentEvent('menubutton');");
+            this.appView.loadUrl("javascript:cordova.require('cordova').fireDocumentEvent('menubutton');");
             return super.onKeyDown(keyCode, event);
         }
 
         // If search key
         else if (keyCode == KeyEvent.KEYCODE_SEARCH) {
-            this.appView.loadUrl("javascript:require('cordova').fireDocumentEvent('searchbutton');");
+            this.appView.loadUrl("javascript:cordova.require('cordova').fireDocumentEvent('searchbutton');");
             return true;
         }
         return activityResultKeepRunning;

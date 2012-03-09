@@ -233,7 +233,7 @@ public class Storage extends Plugin {
         }
 
         // Let JavaScript know that there are no more rows
-        this.sendJavascript("require('cordova/plugin/android/storage').completeQuery('" + tx_id + "', " + result + ");");
+        this.sendJavascript("cordova.require('cordova/plugin/android/storage').completeQuery('" + tx_id + "', " + result + ");");
     }
 
 }
