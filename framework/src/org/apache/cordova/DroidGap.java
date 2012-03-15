@@ -647,7 +647,6 @@ public class DroidGap extends Activity {
     {
         String jailPath = "/data/data/" + this.getPackageName() + "/www-data/" + file;
         appView.loadUrlIntoView("file://" + jailPath);
-
     }
     
     public void loadJailedFile(String file, int time)
