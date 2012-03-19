@@ -57,6 +57,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebSettings.LayoutAlgorithm;
 import android.webkit.WebView;
@@ -210,7 +211,7 @@ public class DroidGap extends Activity {
         root.setBackgroundColor(this.backgroundColor);
         root.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.FILL_PARENT, 
                 ViewGroup.LayoutParams.FILL_PARENT, 0.0F));
-        
+  
         appView = new CordovaWebView(this);
 
         root.addView(appView);
@@ -218,7 +219,7 @@ public class DroidGap extends Activity {
         setContentView(root);
         appView.init();
         pluginManager = appView.appCode.pluginManager;
-    }
+   }
     
     /**
      * Load PhoneGap configuration from res/xml/phonegap.xml.
@@ -335,7 +336,6 @@ public class DroidGap extends Activity {
         if (this.appView == null) {
             return;
         }
-
         // Send pause event to JavaScript
         this.appView.loadUrl("javascript:try{PhoneGap.fireDocumentEvent('pause');}catch(e){};");
 
@@ -490,8 +490,10 @@ public class DroidGap extends Activity {
         this.appView.loadUrl("javascript:try{cordova.require('cordova/channel').onPause.fire();}catch(e){console.log('exception firing pause event from native');};");
 
         // Forward to plugins
-        this.pluginManager.onPause(this.keepRunning);
-
+        if (this.pluginManager != null) {
+        	this.pluginManager.onPause(this.keepRunning);
+        }
+        
         // If app doesn't want to run in background
         if (!this.keepRunning) {
 
@@ -501,10 +503,10 @@ public class DroidGap extends Activity {
             root.setBackgroundResource(this.splashscreen);
         }
 
-        
+       
         // If keepRunning
         this.keepRunning = this.getBooleanProperty("keepRunning", true);
-    }
+   }
     
     @Override
     /**
@@ -526,8 +528,10 @@ public class DroidGap extends Activity {
         this.appView.loadUrl("javascript:try{cordova.require('cordova/channel').onResume.fire();}catch(e){console.log('exception firing resume event from native');};");
 
         // Forward to plugins
-        this.pluginManager.onResume(this.keepRunning || this.activityResultKeepRunning);
-
+        if (this.pluginManager != null) {
+        	this.pluginManager.onResume(this.keepRunning || this.activityResultKeepRunning);
+        }
+        
         // If app doesn't want to run in background
         if (!this.keepRunning || this.activityResultKeepRunning) {
 
@@ -642,7 +646,6 @@ public class DroidGap extends Activity {
             this.endActivity();
         }
     }
-    
     public void loadJailedFile(String file)
     {
         String jailPath = "/data/data/" + this.getPackageName() + "/www-data/" + file;
