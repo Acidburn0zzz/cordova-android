@@ -18,7 +18,7 @@
 */
 package com.phonegap.api;
 
-mport android.app.Activity;
+import android.app.Activity;
 
 /**
  * The Cordova activity abstract class that is extended by DroidGap.

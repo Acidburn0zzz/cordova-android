@@ -487,8 +487,19 @@ public class CordovaChromeClient extends WebChromeClient implements CordovaInter
       return mCtx.getApplicationContext();
     }
 
+    /* This needs to do stuff */
     public void addService(String serviceType, String className) {
       // TODO Auto-generated method stub
       
+    }
+
+    public void startActivity(Intent intent) {
+      // TODO Auto-generated method stub
+      
+    }
+
+    public boolean isUrlWhiteListed(String source) {
+      // TODO Auto-generated method stub
+      return false;
     }
 }

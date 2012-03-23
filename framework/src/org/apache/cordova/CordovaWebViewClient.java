@@ -327,8 +327,8 @@ public class CordovaWebViewClient extends WebViewClient {
         // not loaded yet then just set a flag so that the onNativeReady can be fired
         // from the JS side when the JS gets to that code.
         if (!url.equals("about:blank")) {
-            ctx.appView.loadUrl("javascript:try{ cordova.require('cordova/channel').onNativeReady.fire();}catch(e){_nativeReady = true;}");
-            this.ctx.postMessage("onNativeReady", null);
+            appView.loadUrl("javascript:try{ cordova.require('cordova/channel').onNativeReady.fire();}catch(e){_nativeReady = true;}");
+            //this.postMessage("onNativeReady", null);
         }
 
         // Make app visible after 2 sec in case there was a JS error and PhoneGap JS never initialized correctly
@@ -410,8 +410,10 @@ public class CordovaWebViewClient extends WebViewClient {
          * If you do a document.location.href the url does not get pushed on the stack
          * so we do a check here to see if the url should be pushed.
          */
+      /*
         if (!this.ctx.peekAtUrlStack().equals(url)) {
             this.ctx.pushUrl(url);
         }
+        */
     }
 }

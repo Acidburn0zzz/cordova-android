@@ -502,10 +502,11 @@ public class DroidGap extends Activity {
         if ((this.appView.urls.size() == 0) && (this.splashscreen != 0)) {
             root.setBackgroundResource(this.splashscreen);
         }
+      }
 
        
         // If keepRunning
-        this.keepRunning = this.getBooleanProperty("keepRunning", true);
+        //this.keepRunning = this.getBooleanProperty("keepRunning", true);
    }
     
     @Override
@@ -764,7 +765,7 @@ public class DroidGap extends Activity {
      }
 
     public void setActivityResultCallback(IPlugin plugin) {
-         this.activityResultCallback = plugin;
+         //this.activityResultCallback = plugin;
      }
 
      /**
@@ -840,12 +841,10 @@ public class DroidGap extends Activity {
 
     public void bindBackButton(boolean override) {
       // TODO Auto-generated method stub
-      this.bound = override;
     }
 
     public boolean isBackButtonBound() {
-      // TODO Auto-generated method stub
-      return this.bound;
+      return false;
     }
 
 }

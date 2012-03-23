@@ -440,7 +440,7 @@ public class CordovaWebView extends WebView {
                                 message = loading;
                             }
                         }
-                        properApp.spinnerStart(title, message);
+                        //properApp.spinnerStart(title, message);
                     }
                 }
 
