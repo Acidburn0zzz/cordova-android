@@ -1,4 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
+<widget xmlns   = "http://www.w3.org/ns/widgets"
+  xmlns:gap = "http://phonegap.com/ns/1.0"
+  id    = "com.phonegap.getting.started"
+  version   = "1.0.0">
 <!--
        Licensed to the Apache Software Foundation (ASF) under one
        or more contributor license agreements.  See the NOTICE file
@@ -17,11 +21,6 @@
        specific language governing permissions and limitations
        under the License.
 -->
-<cordova>
-    <!--
-    access elements control the Android whitelist.
-    Domains are assumed blocked unless set otherwise
-     -->
 
     <access origin="http://127.0.0.1*"/> <!-- allow local pages -->
 
@@ -50,5 +49,5 @@
     <plugin name="Battery" value="org.apache.cordova.BatteryListener"/>
     <plugin name="SplashScreen" value="org.apache.cordova.SplashScreen"/>
 </plugins>
-</cordova>
+</widget>
 
