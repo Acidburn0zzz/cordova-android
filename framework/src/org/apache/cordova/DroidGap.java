@@ -609,19 +609,7 @@ public class DroidGap extends Activity implements CordovaInterface {
             return;
         }
 
-        // Send pause event to JavaScript
-        this.appView.loadUrl("javascript:try{cordova.fireDocumentEvent('pause');}catch(e){console.log('exception firing pause event from native');};");
-
-        // Forward to plugins
-        if (this.appView.pluginManager != null) {
-            this.appView.pluginManager.onPause(this.keepRunning);
-        }
-
-        // If app doesn't want to run in background
-        if (!this.keepRunning) {
-            // Pause JavaScript timers (including setInterval)
-            this.appView.pauseTimers();
-        }
+        this.appView.handlePause(this.keepRunning);
 
         // hide the splash screen to avoid leaking a window
         this.removeSplashScreen();
@@ -655,26 +643,14 @@ public class DroidGap extends Activity implements CordovaInterface {
         if (this.appView == null) {
             return;
         }
-
-        // Send resume event to JavaScript
-        this.appView.loadUrl("javascript:try{cordova.fireDocumentEvent('resume');}catch(e){console.log('exception firing resume event from native');};");
-
-        // Forward to plugins
-        if (this.appView.pluginManager != null) {
-            this.appView.pluginManager.onResume(this.keepRunning || this.activityResultKeepRunning);
-        }
-
-        // If app doesn't want to run in background
-        if (!this.keepRunning || this.activityResultKeepRunning) {
-
+        else
+        {
+            this.appView.handleResume(this.keepRunning, this.activityResultKeepRunning);
             // Restore multitasking state
             if (this.activityResultKeepRunning) {
                 this.keepRunning = this.activityResultKeepRunning;
                 this.activityResultKeepRunning = false;
             }
-
-            // Resume JavaScript timers (including setInterval)
-            this.appView.resumeTimers();
         }
     }
 
@@ -690,17 +666,7 @@ public class DroidGap extends Activity implements CordovaInterface {
         this.removeSplashScreen();
 
         if (this.appView != null) {
-
-            // Send destroy event to JavaScript
-            this.appView.loadUrl("javascript:try{cordova.require('cordova/channel').onDestroy.fire();}catch(e){console.log('exception firing destroy event from native');};");
-
-            // Load blank page so that JavaScript onunload is called
-            this.appView.loadUrl("about:blank");
-
-            // Forward to plugins
-            if (this.appView.pluginManager != null) {
-                this.appView.pluginManager.onDestroy();
-            }
+            this.appView.handleDestroy();
         }
         else {
             this.endActivity();
