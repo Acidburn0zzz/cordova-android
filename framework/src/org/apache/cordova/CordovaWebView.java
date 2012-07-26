@@ -701,7 +701,9 @@ public class CordovaWebView extends WebView {
             }
             else
             {
-                return super.onKeyDown(keyCode, event);
+                //If you want to use weird buttons on Android, Cool.  That being said, we won't maintain a map for them!
+                this.loadUrl("javascript:cordova:fireDocumentEvent('androidKeyDown',{ keyCode: "  + Integer.toString(keyCode) + "});");
+                return true;
             }
         }
         return super.onKeyDown(keyCode, event);
@@ -714,8 +716,8 @@ public class CordovaWebView extends WebView {
 
         Log.d(TAG, "KeyDown has been triggered on the view");
 
-        // If back key
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
+        // If back key (auto-detect Sony Circle Key)
+        if (keyCode == KeyEvent.KEYCODE_BACK && !event.isAltPressed()) {
             // If back key is bound, then send event to JavaScript
             if (this.bound) {
                 this.loadUrl("javascript:cordova.fireDocumentEvent('backbutton');");
@@ -745,11 +747,10 @@ public class CordovaWebView extends WebView {
         }
         else if(keyUpCodes.contains(keyCode))
         {
-            //What the hell should this do?
+            //If you want to use weird buttons on Android, Cool.  That being said, we won't maintain a map for them!
+            this.loadUrl("javascript:cordova:fireDocumentEvent('androidKeyUp', { keyCode : "  + Integer.toString(keyCode) +  "});");
             return super.onKeyUp(keyCode, event);
         }
-
-
         Log.d(TAG, "KeyUp has been triggered on the view");
         return false;
     }
