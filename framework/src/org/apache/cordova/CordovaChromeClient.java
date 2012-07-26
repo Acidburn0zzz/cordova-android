@@ -28,6 +28,7 @@ import android.app.AlertDialog;
 //import android.content.Context;
 import android.content.DialogInterface;
 import android.view.KeyEvent;
+import android.view.View;
 //import android.view.View;
 import android.webkit.ConsoleMessage;
 import android.webkit.JsPromptResult;
@@ -329,4 +330,6 @@ public class CordovaChromeClient extends WebChromeClient {
         super.onGeolocationPermissionsShowPrompt(origin, callback);
         callback.invoke(origin, true, false);
     }
+    
+   
 }

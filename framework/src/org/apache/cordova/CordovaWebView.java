@@ -303,8 +303,20 @@ public class CordovaWebView extends WebView {
      */
     @Override
     public void loadUrl(String url) {
-        if (url.equals("about:blank") || url.startsWith("javascript:")) {
+        if (url.equals("about:blank")) {
             this.loadUrlNow(url);
+        }
+        else if (url.startsWith("javascript:")) {
+            HitTestResult testResult = this.getHitTestResult();
+            if(testResult != null && testResult.getType() == HitTestResult.EDIT_TEXT_TYPE)
+            {
+                //Don't do anything right now, we have an active cursor on the EDIT TEXT
+                //This should be Input Method Independent
+            }
+            else
+            {
+                this.loadUrlNow(url);
+            }
         }
         else {
 
@@ -454,9 +466,12 @@ public class CordovaWebView extends WebView {
      * @param message
      */
     public void sendJavascript(String statement) {
+        /*
         if (this.callbackServer != null) {
             this.callbackServer.sendJavascript(statement);
-        }
+        }*/
+        //Screw callback servers, let's play dangerously
+        this.loadUrl("javascript:" + statement);
     }
 
     /**

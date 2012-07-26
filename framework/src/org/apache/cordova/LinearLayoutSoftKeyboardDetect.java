@@ -21,6 +21,7 @@ package org.apache.cordova;
 import org.apache.cordova.api.LOG;
 
 import android.content.Context;
+import android.webkit.WebView.HitTestResult;
 //import android.view.View.MeasureSpec;
 import android.widget.LinearLayout;
 
@@ -75,6 +76,10 @@ public class LinearLayoutSoftKeyboardDetect extends LinearLayout {
         // If oldHeight == height then we got a measurement change that doesn't affect us.
         if (oldHeight == 0 || oldHeight == height) {
             LOG.d(TAG, "Ignore this event");
+            //We are going to throw something here
+            HitTestResult testResult = app.appView.getHitTestResult();
+            if(testResult != null)
+                LOG.d(TAG, "The Node Type Code is  " + Integer.toString(testResult.getType()));
         }
         // Account for orientation change and ignore this event/Fire orientation change
         else if (screenHeight == width)
