@@ -57,6 +57,7 @@ public class CordovaWebView extends WebView {
 
     public PluginManager pluginManager;
     public CallbackServer callbackServer;
+    private boolean paused;
 
 
     /** Actvities and other important classes **/
@@ -80,6 +81,8 @@ public class CordovaWebView extends WebView {
     private boolean volumedownBound;
 
     private boolean volumeupBound;
+
+    private boolean handleButton = false;
 
     /**
      * Constructor.
@@ -117,7 +120,7 @@ public class CordovaWebView extends WebView {
             Log.d(TAG, "Your activity must implement CordovaInterface to work");
         }
         this.setWebChromeClient(new CordovaChromeClient(this.cordova, this));
-        this.setWebViewClient(new CordovaWebViewClient(this.cordova, this));
+        this.initWebViewClient(this.cordova);
         this.loadConfiguration();
         this.setup();
     }
@@ -141,7 +144,7 @@ public class CordovaWebView extends WebView {
             Log.d(TAG, "Your activity must implement CordovaInterface to work");
         }
         this.setWebChromeClient(new CordovaChromeClient(this.cordova, this));
-        this.setWebViewClient(new CordovaWebViewClient(this.cordova, this));
+        this.initWebViewClient(this.cordova);
         this.loadConfiguration();
         this.setup();
     }
@@ -165,11 +168,24 @@ public class CordovaWebView extends WebView {
             Log.d(TAG, "Your activity must implement CordovaInterface to work");
         }
         this.setWebChromeClient(new CordovaChromeClient(this.cordova));
-        this.setWebViewClient(new CordovaWebViewClient(this.cordova));
+        this.initWebViewClient(this.cordova);
         this.loadConfiguration();
         this.setup();
     }
 
+
+    private void initWebViewClient(CordovaInterface cordova) {
+        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB)
+        {
+            this.setWebViewClient(new CordovaWebViewClient(this.cordova, this));
+        }
+        else
+        {
+            this.setWebViewClient(new IceCreamCordovaWebViewClient(this.cordova, this));
+        }
+    }
+
+    
     /**
      * Initialize webview.
      */
@@ -189,7 +205,11 @@ public class CordovaWebView extends WebView {
         //Set the nav dump for HTC 2.x devices (disabling for ICS/Jellybean)
         if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB)
             settings.setNavDump(true);
-
+        
+        //Jellybean rightfully tried to lock this down. Too bad they didn't give us a whitelist
+        //while we do this
+        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.ICE_CREAM_SANDWICH_MR1)
+            settings.setAllowUniversalAccessFromFileURLs(true);
         // Enable database
         settings.setDatabaseEnabled(true);
         String databasePath = this.cordova.getActivity().getApplicationContext().getDir("database", Context.MODE_PRIVATE).getPath();
@@ -714,8 +734,6 @@ public class CordovaWebView extends WebView {
     public boolean onKeyUp(int keyCode, KeyEvent event)
     {
 
-        Log.d(TAG, "KeyDown has been triggered on the view");
-
         // If back key (auto-detect Sony Circle Key)
         if (keyCode == KeyEvent.KEYCODE_BACK && !event.isAltPressed()) {
             // If back key is bound, then send event to JavaScript
@@ -751,8 +769,9 @@ public class CordovaWebView extends WebView {
             this.loadUrl("javascript:cordova:fireDocumentEvent('androidKeyUp', { keyCode : "  + Integer.toString(keyCode) +  "});");
             return super.onKeyUp(keyCode, event);
         }
-        Log.d(TAG, "KeyUp has been triggered on the view");
-        return false;
+
+        //Does webkit change this behaviour?
+        return super.onKeyUp(keyCode, event);
     }
 
     
@@ -789,6 +808,7 @@ public class CordovaWebView extends WebView {
     
     public void handlePause(boolean keepRunning)
     {
+        LOG.d(TAG, "Handle the pause");
         // Send pause event to JavaScript
         this.loadUrl("javascript:try{cordova.fireDocumentEvent('pause');}catch(e){console.log('exception firing pause event from native');};");
 
@@ -802,6 +822,7 @@ public class CordovaWebView extends WebView {
             // Pause JavaScript timers (including setInterval)
             this.pauseTimers();
         }
+        paused = true;
    
     }
     
@@ -821,6 +842,7 @@ public class CordovaWebView extends WebView {
             // Resume JavaScript timers (including setInterval)
             this.resumeTimers();
         }
+        paused = false;
     }
     
     public void handleDestroy()
@@ -843,5 +865,14 @@ public class CordovaWebView extends WebView {
         if (this.pluginManager != null) {
             this.pluginManager.onNewIntent(intent);
         }
+    }
+    
+    public boolean isPaused()
+    {
+        return paused;
+    }
+
+    public boolean hadKeyEvent() {
+        return handleButton;
     }
 }
