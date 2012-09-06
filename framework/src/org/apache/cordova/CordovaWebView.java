@@ -90,6 +90,7 @@ public class CordovaWebView extends WebView {
     private boolean handleButton = false;
 
 	NativeToJsMessageQueue jsMessageQueue;
+	ExposedJsApi exposedJsApi;
 
     /**
      * Constructor.
@@ -199,8 +200,6 @@ public class CordovaWebView extends WebView {
     @SuppressWarnings("deprecation")
     @SuppressLint("NewApi")
     private void setup() {
-    	jsMessageQueue = new NativeToJsMessageQueue(this, cordova);
-    	
         this.setInitialScale(0);
         this.setVerticalScrollBarEnabled(false);
         this.requestFocusFromTouch();
@@ -230,13 +229,10 @@ public class CordovaWebView extends WebView {
         // Enable built-in geolocation
         settings.setGeolocationEnabled(true);
 
-        //Start up the plugin manager
-        try {
-            this.pluginManager = new PluginManager(this, this.cordova);
-        } catch (Exception e) {
-            // TODO Auto-generated catch block
-            e.printStackTrace();
-        }
+        pluginManager = new PluginManager(this, this.cordova);
+        jsMessageQueue = new NativeToJsMessageQueue(this, cordova);
+        exposedJsApi = new ExposedJsApi(pluginManager, jsMessageQueue);
+        
         exposeJsInterface();
     }
 
@@ -246,13 +242,7 @@ public class CordovaWebView extends WebView {
             Log.i(TAG, "Disabled addJavascriptInterface() bridge callback due to a bug on the 2.3 emulator");
             return;
         }
-        this.addJavascriptInterface(new Object() {
-            @SuppressWarnings("unused")
-            public String exec(String service, String action, String callbackId, String arguments) throws JSONException {
-                PluginResult r = pluginManager.exec(service, action, callbackId, arguments, true /* async */);
-                return r == null ? "" : r.getJSONString();
-            }
-        }, "_cordovaExec");
+        this.addJavascriptInterface(exposedJsApi, "_cordovaNative");
     }
 
     /**
