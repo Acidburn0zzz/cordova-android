@@ -18,6 +18,8 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
 
@@ -30,11 +32,23 @@ public class CameraActivity extends Activity {
     private Camera mCamera;
     private Preview mPreview;
 
+    class AFCallback implements Camera.AutoFocusCallback {
+        public void onAutoFocus(boolean success, Camera camera)
+        {
+            Log.d(TAG, "AutoFocus has completed");
+        }
+    }
+    
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "In CameraActivity");
         Log.d(TAG, "explode layout");
+        
+        getWindow().requestFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
+                WindowManager.LayoutParams.FLAG_FULLSCREEN);
+        
         setContentView(R.layout.camera);
 
         // Create an instance of Camera
