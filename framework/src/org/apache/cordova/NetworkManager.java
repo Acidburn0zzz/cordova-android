@@ -69,6 +69,7 @@ public class NetworkManager extends Plugin {
     private static final String LOG_TAG = "NetworkManager";
 
     private String connectionCallbackId;
+    private boolean registered = false;
 
     ConnectivityManager sockMan;
     BroadcastReceiver receiver;
@@ -105,6 +106,7 @@ public class NetworkManager extends Plugin {
                 }
             };
             cordova.getActivity().registerReceiver(this.receiver, intentFilter);
+            this.registered = true;
         }
 
     }
@@ -146,13 +148,21 @@ public class NetworkManager extends Plugin {
      * Stop network receiver.
      */
     public void onDestroy() {
-        if (this.receiver != null) {
+        if (this.receiver != null && this.registered) {
             try {
                 this.cordova.getActivity().unregisterReceiver(this.receiver);
+                this.registered = false;
             } catch (Exception e) {
                 Log.e(LOG_TAG, "Error unregistering network receiver: " + e.getMessage(), e);
             }
         }
+    }
+
+    /**
+     * Stop the network receiver on navigation.
+     */
+    public void onReset() {
+        this.onDestroy();
     }
 
     //--------------------------------------------------------------------------
