@@ -20,6 +20,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -31,19 +32,44 @@ import android.util.Log;
  * and returns the captured image.  When the camera view is closed, the screen displayed before 
  * the camera view was shown is redisplayed.
  */
-public class CameraLauncher extends org.apache.cordova.CameraLauncher {
-    
+public class CameraLauncher extends Plugin {
+
+    private static final int DATA_URL = 0;              // Return base64 encoded string
+    private static final int FILE_URI = 1;              // Return file uri (content://media/external/images/media/2 for Android)
+
+    private static final int PHOTOLIBRARY = 0;          // Choose image from picture library (same as SAVEDPHOTOALBUM for Android)
+    private static final int CAMERA = 1;                // Take picture from camera
+    private static final int SAVEDPHOTOALBUM = 2;       // Choose image from picture library (same as PHOTOLIBRARY for Android)
+
+    private static final int PICTURE = 0;               // allow selection of still pictures only. DEFAULT. Will return format specified via DestinationType
+    private static final int VIDEO = 1;                 // allow selection of video only, ONLY RETURNS URL
+    private static final int ALLMEDIA = 2;              // allow selection from all media types
+
+    private static final int JPEG = 0;                  // Take a picture of type JPEG
+    private static final int PNG = 1;                   // Take a picture of type PNG
+    private static final String GET_PICTURE = "Get Picture";
+    private static final String GET_VIDEO = "Get Video";
+    private static final String GET_All = "Get All";
+
     private static final String LOG_TAG = "CameraLauncher";
-    
-    private int mQuality;                   
-    private int targetWidth;                
-    private int targetHeight;               
-    
-    private Uri imageUri;                  
-    private File photo;
-     
+
+    private int mQuality;                   // Compression quality hint (0-100: 0=low quality & high compression, 100=compress of max quality)
+    private int targetWidth;                // desired width of the image
+    private int targetHeight;               // desired height of the image
+    private Uri imageUri;                   // Uri of captured image
+    private int encodingType;               // Type of encoding to use
+    private int mediaType;                  // What type of media to retrieve
+    private boolean saveToPhotoAlbum;       // Should the picture be saved to the device's photo album
+    private boolean correctOrientation;     // Should the pictures orientation be corrected
+    private boolean allowEdit;              // Should we allow the user to crop the image
+
     public String callbackId;
     private int numPics;
+
+    private MediaScannerConnection conn;    // Used to update gallery app with newly-written files
+    private Uri scanMe;                     // Uri of image to be added to content store
+
+    private File photo;
     
     private static final String _DATA = "_data";    
     
@@ -63,38 +89,55 @@ public class CameraLauncher extends org.apache.cordova.CameraLauncher {
      */
     public PluginResult execute(String action, JSONArray args, String callbackId) {
         PluginResult.Status status = PluginResult.Status.OK;
-        String result = "";     
+        String result = "";
         this.callbackId = callbackId;
-        
-        Log.d(LOG_TAG, "In the execute of camera.CameraLauncher");
-        
-        //try {
+
+        try {
             if (action.equals("takePicture")) {
-                
-                Log.d(LOG_TAG, "In the takePicture of camera.CameraLauncher");
-                
+                int srcType = CAMERA;
+                int destType = FILE_URI;
+                this.saveToPhotoAlbum = false;
                 this.targetHeight = 0;
                 this.targetWidth = 0;
+                this.encodingType = JPEG;
+                this.mediaType = PICTURE;
                 this.mQuality = 80;
 
-                //JSONObject options = args.optJSONObject(0);
-                //if (options != null) {
-                //    this.targetHeight = options.getInt("targetHeight");
-                //    this.targetWidth = options.getInt("targetWidth");
-                //    this.mQuality = options.getInt("quality");
-                //}
-                
-                this.takePicture();
+                this.mQuality = args.getInt(0);
+                destType = args.getInt(1);
+                srcType = args.getInt(2);
+                this.targetWidth = args.getInt(3);
+                this.targetHeight = args.getInt(4);
+                this.encodingType = args.getInt(5);
+                this.mediaType = args.getInt(6);
+                this.allowEdit = args.getBoolean(7);
+                this.correctOrientation = args.getBoolean(8);
+                this.saveToPhotoAlbum = args.getBoolean(9);
 
+                // If the user specifies a 0 or smaller width/height
+                // make it -1 so later comparisons succeed
+                if (this.targetWidth < 1) {
+                    this.targetWidth = -1;
+                }
+                if (this.targetHeight < 1) {
+                    this.targetHeight = -1;
+                }
+
+                if (srcType == CAMERA) {
+                    this.takePicture(destType, encodingType);
+                }
+                else if ((srcType == PHOTOLIBRARY) || (srcType == SAVEDPHOTOALBUM)) {
+                    this.getImage(srcType, destType);
+                }
                 PluginResult r = new PluginResult(PluginResult.Status.NO_RESULT);
                 r.setKeepCallback(true);
                 return r;
             }
             return new PluginResult(status, result);
-        //} catch (JSONException e) {
-        //    e.printStackTrace();
-        //    return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
-        //}
+        } catch (JSONException e) {
+            e.printStackTrace();
+            return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
+        }
     }
     
     //--------------------------------------------------------------------------
@@ -113,7 +156,7 @@ public class CameraLauncher extends org.apache.cordova.CameraLauncher {
      *      img.src=result;
      * 
      */
-    public void takePicture() {
+    public void takePicture(int returnType, int encodingType) {
         Log.d(LOG_TAG, "In takePicture method");
         // Save the number of images currently on disk for later
         this.numPics = queryImgDB().getCount();
@@ -126,6 +169,39 @@ public class CameraLauncher extends org.apache.cordova.CameraLauncher {
                 
         Log.d(LOG_TAG, "calling start activity");
         this.cordova.startActivityForResult((Plugin) this, intent, 1);      
+    }
+    
+    /**
+     * Get image from photo library.
+     *
+     * @param quality           Compression quality hint (0-100: 0=low quality & high compression, 100=compress of max quality)
+     * @param srcType           The album to get image from.
+     * @param returnType        Set the type of image to return.
+     */
+    // TODO: Images selected from SDCARD don't display correctly, but from CAMERA ALBUM do!
+    public void getImage(int srcType, int returnType) {
+        Intent intent = new Intent();
+        String title = GET_PICTURE;
+        if (this.mediaType == PICTURE) {
+            intent.setType("image/*");
+        }
+        else if (this.mediaType == VIDEO) {
+            intent.setType("video/*");
+            title = GET_VIDEO;
+        }
+        else if (this.mediaType == ALLMEDIA) {
+            // I wanted to make the type 'image/*, video/*' but this does not work on all versions
+            // of android so I had to go with the wildcard search.
+            intent.setType("*/*");
+            title = GET_All;
+        }
+
+        intent.setAction(Intent.ACTION_GET_CONTENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        if (this.cordova != null) {
+            this.cordova.startActivityForResult((Plugin) this, Intent.createChooser(intent,
+                    new String(title)), (srcType + 1) * 16 + returnType + 1);
+        }
     }
 
     /**
@@ -282,4 +358,13 @@ public class CameraLauncher extends org.apache.cordova.CameraLauncher {
         cursor.moveToFirst();
         return cursor.getString(column_index);
     }    
+
+    /**
+     * Send error message to JavaScript.
+     *
+     * @param err
+     */
+    public void failPicture(String err) {
+        this.error(new PluginResult(PluginResult.Status.ERROR, err), this.callbackId);
+    }
 }
