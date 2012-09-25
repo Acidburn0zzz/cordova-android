@@ -44,6 +44,10 @@ public class CameraActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
+        /*
+         * Do the initialization of the interface here
+         */
+        
         setContentView(R.layout.camera);
 
         // Create an instance of Camera
@@ -59,6 +63,8 @@ public class CameraActivity extends Activity {
         // Add a listener to the Capture button
         Log.d(TAG, "setup button listener");
         Button captureButton = (Button) findViewById(R.id.button_capture);
+        captureButton.setBackgroundResource(R.drawable.take_pic);
+
         captureButton.setOnClickListener(
             new View.OnClickListener() {
                 //@Override
