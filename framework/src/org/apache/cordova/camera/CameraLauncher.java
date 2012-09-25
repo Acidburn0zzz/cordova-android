@@ -1,11 +1,16 @@
 package org.apache.cordova.camera;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.cordova.DirectoryManager;
 import org.apache.cordova.ExifHelper;
+import org.apache.cordova.FileUtils;
 import org.apache.cordova.api.CordovaInterface;
 import org.apache.cordova.api.LOG;
 import org.apache.cordova.api.Plugin;
@@ -20,6 +25,9 @@ import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Matrix;
+import android.graphics.Bitmap.CompressFormat;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
 import android.os.Environment;
@@ -168,7 +176,7 @@ public class CameraLauncher extends Plugin {
         intent.putExtra(MediaStore.EXTRA_OUTPUT, this.imageUri);
                 
         Log.d(LOG_TAG, "calling start activity");
-        this.cordova.startActivityForResult((Plugin) this, intent, 1);      
+        this.cordova.startActivityForResult((Plugin) this, intent, (CAMERA + 1) * 16 + returnType + 1);      
     }
     
     /**
@@ -224,21 +232,256 @@ public class CameraLauncher extends Plugin {
      */
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
         Log.d(LOG_TAG, "cameralauncher onactivityresult");
-        // If image available
-        if (resultCode == Activity.RESULT_OK) {
-            Log.d(LOG_TAG, "Just returning the path to the image with no manipulation");
-            this.success(new PluginResult(PluginResult.Status.OK, this.imageUri.toString()), this.callbackId);
-        }
-        // If cancelled
-        else if (resultCode == Activity.RESULT_CANCELED) {
-            this.failPicture("Camera cancelled.");
-        }
 
-        // If something else
-        else {
-            this.failPicture("Did not complete!");
+        // Get src and dest types from request code
+        int srcType = (requestCode / 16) - 1;
+        int destType = (requestCode % 16) - 1;
+        int rotate = 0;
+
+        // If CAMERA
+        if (srcType == CAMERA) {        
+            // If image available
+            if (resultCode == Activity.RESULT_OK) {
+                Log.d(LOG_TAG, "Just returning the path to the image with no manipulation");
+                this.success(new PluginResult(PluginResult.Status.OK, this.imageUri.toString()), this.callbackId);
+            }
+            // If cancelled
+            else if (resultCode == Activity.RESULT_CANCELED) {
+                this.failPicture("Camera cancelled.");
+            }
+    
+            // If something else
+            else {
+                this.failPicture("Did not complete!");
+            }
+        } else if ((srcType == PHOTOLIBRARY) || (srcType == SAVEDPHOTOALBUM)) {
+            if (resultCode == Activity.RESULT_OK) {
+                Uri uri = intent.getData();
+
+                // If you ask for video or all media type you will automatically get back a file URI
+                // and there will be no attempt to resize any returned data
+                if (this.mediaType != PICTURE) {
+                    this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                }
+                else {
+                    // This is a special case to just return the path as no scaling,
+                    // rotating or compression needs to be done
+                    if (this.targetHeight == -1 && this.targetWidth == -1 &&
+                            this.mQuality == 100 && destType == FILE_URI && !this.correctOrientation) {
+                        this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                    } else {
+                        // Get the path to the image. Makes loading so much easier.
+                        String imagePath = FileUtils.getRealPathFromURI(uri, this.cordova);
+                        Log.d(LOG_TAG, "Real path = " + imagePath);
+                        // If we don't have a valid image so quit.
+                        if (imagePath == null) {
+                            Log.d(LOG_TAG, "I either have a null image path or bitmap");
+                            this.failPicture("Unable to retrieve path to picture!");
+                            return;
+                        }
+                        Bitmap bitmap = getScaledBitmap(imagePath);
+                        if (bitmap == null) {
+                            Log.d(LOG_TAG, "I either have a null image path or bitmap");
+                            this.failPicture("Unable to create bitmap!");
+                            return;
+                        }
+
+                        if (this.correctOrientation) {
+                            String[] cols = { MediaStore.Images.Media.ORIENTATION };
+                            Cursor cursor = this.cordova.getActivity().getContentResolver().query(intent.getData(),
+                                    cols, null, null, null);
+                            if (cursor != null) {
+                                cursor.moveToPosition(0);
+                                rotate = cursor.getInt(0);
+                                cursor.close();
+                            }
+                            if (rotate != 0) {
+                                Matrix matrix = new Matrix();
+                                matrix.setRotate(rotate);
+                                bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+                            }
+                        }
+
+                        // If sending base64 image back
+                        if (destType == DATA_URL) {
+                            this.processPicture(bitmap);
+                        }
+
+                        // If sending filename back
+                        else if (destType == FILE_URI) {
+                            // Do we need to scale the returned file
+                            if (this.targetHeight > 0 && this.targetWidth > 0) {
+                                try {
+                                    // Create an ExifHelper to save the exif data that is lost during compression
+                                    String resizePath = DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()) + "/resize.jpg";
+                                    ExifHelper exif = new ExifHelper();
+                                    try {
+                                        if (this.encodingType == JPEG) {
+                                            exif.createInFile(resizePath);
+                                            exif.readExifData();
+                                            rotate = exif.getOrientation();
+                                        }
+                                    } catch (IOException e) {
+                                        e.printStackTrace();
+                                    }
+
+                                    OutputStream os = new FileOutputStream(resizePath);
+                                    bitmap.compress(Bitmap.CompressFormat.JPEG, this.mQuality, os);
+                                    os.close();
+
+                                    // Restore exif data to file
+                                    if (this.encodingType == JPEG) {
+                                        exif.createOutFile(FileUtils.getRealPathFromURI(uri, this.cordova));
+                                        exif.writeExifData();
+                                    }
+
+                                    // The resized image is cached by the app in order to get around this and not have to delete you
+                                    // application cache I'm adding the current system time to the end of the file url.
+                                    this.success(new PluginResult(PluginResult.Status.OK, ("file://" + resizePath + "?" + System.currentTimeMillis())), this.callbackId);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                    this.failPicture("Error retrieving image.");
+                                }
+                            }
+                            else {
+                                this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                            }
+                        }
+                        if (bitmap != null) {
+                            bitmap.recycle();
+                            bitmap = null;
+                        }
+                        System.gc();
+                    }
+                }
+            }
+            else if (resultCode == Activity.RESULT_CANCELED) {
+                this.failPicture("Selection cancelled.");
+            }
+            else {
+                this.failPicture("Selection did not complete!");
+            }
         }
     }
+
+    /**
+     * Compress bitmap using jpeg, convert to Base64 encoded string, and return to JavaScript.
+     *
+     * @param bitmap
+     */
+    public void processPicture(Bitmap bitmap) {
+        ByteArrayOutputStream jpeg_data = new ByteArrayOutputStream();
+        try {
+            if (bitmap.compress(CompressFormat.JPEG, mQuality, jpeg_data)) {
+                byte[] code = jpeg_data.toByteArray();
+                byte[] output = Base64.encodeBase64(code);
+                String js_out = new String(output);
+                this.success(new PluginResult(PluginResult.Status.OK, js_out), this.callbackId);
+                js_out = null;
+                output = null;
+                code = null;
+            }
+        } catch (Exception e) {
+            this.failPicture("Error compressing image.");
+        }
+        jpeg_data = null;
+    }
+
+    /**
+     * Return a scaled bitmap based on the target width and height
+     *
+     * @param imagePath
+     * @return
+     */
+    private Bitmap getScaledBitmap(String imagePath) {
+        // If no new width or height were specified return the original bitmap
+        if (this.targetWidth <= 0 && this.targetHeight <= 0) {
+            return BitmapFactory.decodeFile(imagePath);
+        }
+
+        // figure out the original width and height of the image
+        BitmapFactory.Options options = new BitmapFactory.Options();
+        options.inJustDecodeBounds = true;
+        BitmapFactory.decodeFile(imagePath, options);
+
+        // determine the correct aspect ratio
+        int[] widthHeight = calculateAspectRatio(options.outWidth, options.outHeight);
+
+        // Load in the smallest bitmap possible that is closest to the size we want
+        options.inJustDecodeBounds = false;
+        options.inSampleSize = calculateSampleSize(options.outWidth, options.outHeight, this.targetWidth, this.targetHeight);
+        Bitmap unscaledBitmap = BitmapFactory.decodeFile(imagePath, options);
+
+        return Bitmap.createScaledBitmap(unscaledBitmap, widthHeight[0], widthHeight[1], true);
+    }
+
+    /**
+     * Maintain the aspect ratio so the resulting image does not look smooshed
+     *
+     * @param origWidth
+     * @param origHeight
+     * @return
+     */
+    public int[] calculateAspectRatio(int origWidth, int origHeight) {
+        int newWidth = this.targetWidth;
+        int newHeight = this.targetHeight;
+
+        // If no new width or height were specified return the original bitmap
+        if (newWidth <= 0 && newHeight <= 0) {
+            newWidth = origWidth;
+            newHeight = origHeight;
+        }
+        // Only the width was specified
+        else if (newWidth > 0 && newHeight <= 0) {
+            newHeight = (newWidth * origHeight) / origWidth;
+        }
+        // only the height was specified
+        else if (newWidth <= 0 && newHeight > 0) {
+            newWidth = (newHeight * origWidth) / origHeight;
+        }
+        // If the user specified both a positive width and height
+        // (potentially different aspect ratio) then the width or height is
+        // scaled so that the image fits while maintaining aspect ratio.
+        // Alternatively, the specified width and height could have been
+        // kept and Bitmap.SCALE_TO_FIT specified when scaling, but this
+        // would result in whitespace in the new image.
+        else {
+            double newRatio = newWidth / (double) newHeight;
+            double origRatio = origWidth / (double) origHeight;
+
+            if (origRatio > newRatio) {
+                newHeight = (newWidth * origHeight) / origWidth;
+            } else if (origRatio < newRatio) {
+                newWidth = (newHeight * origWidth) / origHeight;
+            }
+        }
+
+        int[] retval = new int[2];
+        retval[0] = newWidth;
+        retval[1] = newHeight;
+        return retval;
+    }
+
+    /**
+     * Figure out what ratio we can load our image into memory at while still being bigger than
+     * our desired width and height
+     *
+     * @param srcWidth
+     * @param srcHeight
+     * @param dstWidth
+     * @param dstHeight
+     * @return
+     */
+    public static int calculateSampleSize(int srcWidth, int srcHeight, int dstWidth, int dstHeight) {
+        final float srcAspect = (float)srcWidth / (float)srcHeight;
+        final float dstAspect = (float)dstWidth / (float)dstHeight;
+
+        if (srcAspect > dstAspect) {
+            return srcWidth / dstWidth;
+        } else {
+            return srcHeight / dstHeight;
+        }
+      }
     
     /**
      * Scales the bitmap according to the requested size.
