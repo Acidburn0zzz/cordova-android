@@ -28,11 +28,14 @@ public class CameraActivity extends Activity {
     protected static final String TAG = "CameraActivity";
     private Camera mCamera;
     private Preview mPreview;
+    private boolean debounce = false;
 
     class AFCallback implements Camera.AutoFocusCallback {
         public void onAutoFocus(boolean success, Camera camera)
         {
             Log.d(TAG, "AutoFocus has completed");
+            camera.takePicture(null, null, mPicture);
+            debounce = true;
         }
     }
     
@@ -71,10 +74,13 @@ public class CameraActivity extends Activity {
         buttonContainer.setBackgroundResource(R.drawable.widget_back);
         captureButton.setOnClickListener(
             new View.OnClickListener() {
+
                 //@Override
                 public void onClick(View v) {
-                    // get an image from the camera
-                    mCamera.takePicture(null, null, mPicture);
+                    if(!debounce)
+                    {
+                        mCamera.autoFocus(new AFCallback());
+                    }
                 }
             }
         );
