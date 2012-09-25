@@ -44,6 +44,8 @@ public class CameraActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
+        
+        
         /*
          * Do the initialization of the interface here
          */
@@ -59,7 +61,8 @@ public class CameraActivity extends Activity {
         mPreview = new Preview(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
         preview.addView(mPreview);
-        
+        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB_MR2)
+            preview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
         // Add a listener to the Capture button
         Log.d(TAG, "setup button listener");
         Button captureButton = (Button) findViewById(R.id.button_capture);
@@ -83,8 +86,11 @@ public class CameraActivity extends Activity {
             mCamera.release();        // release the camera for other applications
             mCamera = null;
         }
+        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB_MR2)
+            mPreview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         super.onPause();
     }    
+    
     
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
