@@ -20,6 +20,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 
 public class CameraActivity extends Activity {
 
@@ -44,8 +46,6 @@ public class CameraActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
-        
-        
         /*
          * Do the initialization of the interface here
          */
@@ -67,7 +67,8 @@ public class CameraActivity extends Activity {
         Log.d(TAG, "setup button listener");
         Button captureButton = (Button) findViewById(R.id.button_capture);
         captureButton.setBackgroundResource(R.drawable.take_pic);
-
+        RelativeLayout buttonContainer = (RelativeLayout) findViewById(R.id.button_container);
+        buttonContainer.setBackgroundResource(R.drawable.widget_back);
         captureButton.setOnClickListener(
             new View.OnClickListener() {
                 //@Override
