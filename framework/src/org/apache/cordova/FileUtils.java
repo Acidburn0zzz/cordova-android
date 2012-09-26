@@ -1047,7 +1047,7 @@ public class FileUtils extends Plugin {
      * @return the full path to the file
      */
     @SuppressWarnings("deprecation")
-    public
+    protected
     static String getRealPathFromURI(Uri contentUri, CordovaInterface cordova) {
         String[] proj = { _DATA };
         Cursor cursor = cordova.getActivity().managedQuery(contentUri, proj, null, null, null);

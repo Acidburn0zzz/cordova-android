@@ -1,21 +1,3 @@
-/*
-       Licensed to the Apache Software Foundation (ASF) under one
-       or more contributor license agreements.  See the NOTICE file
-       distributed with this work for additional information
-       regarding copyright ownership.  The ASF licenses this file
-       to you under the Apache License, Version 2.0 (the
-       "License"); you may not use this file except in compliance
-       with the License.  You may obtain a copy of the License at
-
-         http://www.apache.org/licenses/LICENSE-2.0
-
-       Unless required by applicable law or agreed to in writing,
-       software distributed under the License is distributed on an
-       "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-       KIND, either express or implied.  See the License for the
-       specific language governing permissions and limitations
-       under the License.
-*/
 package org.apache.cordova;
 
 import java.io.ByteArrayOutputStream;
@@ -27,14 +9,21 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.cordova.DirectoryManager;
+import org.apache.cordova.ExifHelper;
+import org.apache.cordova.FileUtils;
+import org.apache.cordova.api.CordovaInterface;
 import org.apache.cordova.api.LOG;
 import org.apache.cordova.api.Plugin;
 import org.apache.cordova.api.PluginResult;
+import org.apache.cordova.camera.CameraActivity;
 import org.json.JSONArray;
 import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.ContentValues;
+import android.content.Context;
 import android.content.Intent;
 import android.database.Cursor;
 import android.graphics.Bitmap;
@@ -48,9 +37,10 @@ import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
 
+
 /**
  * This class launches the camera view, allows the user to take a picture, closes the camera view,
- * and returns the captured image.  When the camera view is closed, the screen displayed before
+ * and returns the captured image.  When the camera view is closed, the screen displayed before 
  * the camera view was shown is redisplayed.
  */
 public class CameraLauncher extends Plugin implements MediaScannerConnectionClient {
@@ -90,26 +80,19 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
     private MediaScannerConnection conn;    // Used to update gallery app with newly-written files
     private Uri scanMe;                     // Uri of image to be added to content store
 
-    //This should never be null!
-    //private CordovaInterface cordova;
-
+    private File photo;
+    
+    private static final String _DATA = "_data";    
+    
     /**
      * Constructor.
      */
     public CameraLauncher() {
     }
 
-//    public void setContext(CordovaInterface mCtx) {
-//        super.setContext(mCtx);
-//        if (CordovaInterface.class.isInstance(mCtx))
-//            cordova = (CordovaInterface) mCtx;
-//        else
-//            LOG.d(LOG_TAG, "ERROR: You must use the CordovaInterface for this to work correctly. Please implement it in your activity");
-//    }
-
     /**
      * Executes the request and returns PluginResult.
-     *
+     * 
      * @param action        The action to execute.
      * @param args          JSONArry of arguments for the plugin.
      * @param callbackId    The callback id used when calling back into JavaScript.
@@ -167,62 +150,38 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
             return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
         }
     }
-
+    
     //--------------------------------------------------------------------------
     // LOCAL METHODS
     //--------------------------------------------------------------------------
-
+    
     /**
      * Take a picture with the camera.
      * When an image is captured or the camera view is cancelled, the result is returned
      * in CordovaActivity.onActivityResult, which forwards the result to this.onActivityResult.
-     *
+     * 
      * The image can either be returned as a base64 string or a URI that points to the file.
      * To display base64 string in an img tag, set the source to:
      *      img.src="data:image/jpeg;base64,"+result;
      * or to display URI in an img tag
      *      img.src=result;
-     *
-     * @param quality           Compression quality hint (0-100: 0=low quality & high compression, 100=compress of max quality)
-     * @param returnType        Set the type of image to return.
+     * 
      */
     public void takePicture(int returnType, int encodingType) {
+        Log.d(LOG_TAG, "In takePicture method");
         // Save the number of images currently on disk for later
-        this.numPics = queryImgDB(whichContentStore()).getCount();
+        this.numPics = queryImgDB().getCount();
 
-        // Display camera
-        Intent intent = new Intent("android.media.action.IMAGE_CAPTURE");
-
-        // Specify file so that large image is captured and returned
-        File photo = createCaptureFile(encodingType);
-        intent.putExtra(android.provider.MediaStore.EXTRA_OUTPUT, Uri.fromFile(photo));
+        Intent intent = new Intent(this.cordova.getActivity(), CameraActivity.class);
+        this.photo = createCaptureFile();
         this.imageUri = Uri.fromFile(photo);
-
-        if (this.cordova != null) {
-            this.cordova.startActivityForResult((Plugin) this, intent, (CAMERA + 1) * 16 + returnType + 1);
-        }
-//        else
-//            LOG.d(LOG_TAG, "ERROR: You must use the CordovaInterface for this to work correctly. Please implement it in your activity");
+        Log.d(LOG_TAG, "Using URI = " + this.imageUri.toString());
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, this.imageUri);
+                
+        Log.d(LOG_TAG, "calling start activity");
+        this.cordova.startActivityForResult((Plugin) this, intent, (CAMERA + 1) * 16 + returnType + 1);      
     }
-
-    /**
-     * Create a file in the applications temporary directory based upon the supplied encoding.
-     *
-     * @param encodingType of the image to be taken
-     * @return a File object pointing to the temporary picture
-     */
-    private File createCaptureFile(int encodingType) {
-        File photo = null;
-        if (encodingType == JPEG) {
-            photo = new File(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()), ".Pic.jpg");
-        } else if (encodingType == PNG) {
-            photo = new File(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()), ".Pic.png");
-        } else {
-            throw new IllegalArgumentException("Invalid Encoding Type: " + encodingType);
-        }
-        return photo;
-    }
-
+    
     /**
      * Get image from photo library.
      *
@@ -257,14 +216,25 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
     }
 
     /**
-     * Called when the camera view exits.
-     *
-     * @param requestCode       The request code originally supplied to startActivityForResult(),
+     * Create a file in the applications temporary directory based upon the supplied encoding.
+     * 
+     * @return a File object pointing to the temporary picture
+     */
+    private File createCaptureFile() {
+        File photo = new File(getTempDirectoryPath(cordova.getActivity()),  "Pic.jpg");
+        return photo;
+    }
+ 
+    /**
+     * Called when the camera view exits. 
+     * 
+     * @param requestCode       The request code originally supplied to startActivityForResult(), 
      *                          allowing you to identify who this result came from.
      * @param resultCode        The integer result code returned by the child activity through its setResult().
      * @param intent            An Intent, which can return result data to the caller (various data can be attached to Intent "extras").
      */
     public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+        Log.d(LOG_TAG, "cameralauncher onactivityresult");
 
         // Get src and dest types from request code
         int srcType = (requestCode / 16) - 1;
@@ -272,17 +242,20 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
         int rotate = 0;
 
         // If CAMERA
-        if (srcType == CAMERA) {
+        if (srcType == CAMERA) {        
             // If image available
             if (resultCode == Activity.RESULT_OK) {
                 try {
+                    Log.d(LOG_TAG, "In Camera");
                     // Create an ExifHelper to save the exif data that is lost during compression
                     ExifHelper exif = new ExifHelper();
                     try {
                         if (this.encodingType == JPEG) {
+                            Log.d(LOG_TAG, "Getting exif for = " + DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()) + "/.Pic.jpg");
                             exif.createInFile(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()) + "/.Pic.jpg");
                             exif.readExifData();
                             rotate = exif.getOrientation();
+                            Log.d(LOG_TAG, "Rotate is now = " + rotate);
                         }
                     } catch (IOException e) {
                         e.printStackTrace();
@@ -293,6 +266,7 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
 
                     // If sending base64 image back
                     if (destType == DATA_URL) {
+                        Log.d(LOG_TAG, "it's a data url");
                         bitmap = getScaledBitmap(FileUtils.stripFileProtocol(imageUri.toString()));
 
                         if (rotate != 0 && this.correctOrientation) {
@@ -305,6 +279,7 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
 
                     // If sending filename back
                     else if (destType == FILE_URI) {
+                        Log.d(LOG_TAG, "it's a file url");
                         if (!this.saveToPhotoAlbum) {
                             uri = Uri.fromFile(new File(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()), System.currentTimeMillis() + ".jpg"));
                         } else {
@@ -314,26 +289,36 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
                         if (uri == null) {
                             this.failPicture("Error capturing image - no media storage found.");
                         }
+                        
+                        Log.d(LOG_TAG, "Height = " + this.targetHeight);
+                        Log.d(LOG_TAG, "Width = " + this.targetWidth);
+                        Log.d(LOG_TAG, "Quality = " + this.mQuality);
+                        Log.d(LOG_TAG, "rotate = " + rotate);
 
                         // If all this is true we shouldn't compress the image.
                         if (this.targetHeight == -1 && this.targetWidth == -1 && this.mQuality == 100 && rotate == 0) {
+                            Log.d(LOG_TAG, "change nothing and return file");
                             writeUncompressedImage(uri);
 
                             this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
                         } else {
+                            Log.d(LOG_TAG, "loading into bitmap");
                             bitmap = getScaledBitmap(FileUtils.stripFileProtocol(imageUri.toString()));
 
                             if (rotate != 0 && this.correctOrientation) {
+                                Log.d(LOG_TAG, "Rotating the bitmap");
                                 bitmap = getRotatedBitmap(rotate, bitmap, exif);
                             }
 
                             // Add compressed version of captured image to returned media store Uri
+                            Log.d(LOG_TAG, "writing compressed data");
                             OutputStream os = this.cordova.getActivity().getContentResolver().openOutputStream(uri);
                             bitmap.compress(Bitmap.CompressFormat.JPEG, this.mQuality, os);
                             os.close();
 
                             // Restore exif data to file
                             if (this.encodingType == JPEG) {
+                                Log.d(LOG_TAG, "restorning exif information");
                                 String exifPath;
                                 if (this.saveToPhotoAlbum) {
                                     exifPath = FileUtils.getRealPathFromURI(uri, this.cordova);
@@ -367,10 +352,7 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
             else {
                 this.failPicture("Did not complete!");
             }
-        }
-
-        // If retrieving photo from library
-        else if ((srcType == PHOTOLIBRARY) || (srcType == SAVEDPHOTOALBUM)) {
+        } else if ((srcType == PHOTOLIBRARY) || (srcType == SAVEDPHOTOALBUM)) {
             if (resultCode == Activity.RESULT_OK) {
                 Uri uri = intent.getData();
 
@@ -391,13 +373,13 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
                         Log.d(LOG_TAG, "Real path = " + imagePath);
                         // If we don't have a valid image so quit.
                         if (imagePath == null) {
-                        	Log.d(LOG_TAG, "I either have a null image path or bitmap");
+                            Log.d(LOG_TAG, "I either have a null image path or bitmap");
                             this.failPicture("Unable to retrieve path to picture!");
                             return;
                         }
                         Bitmap bitmap = getScaledBitmap(imagePath);
                         if (bitmap == null) {
-                        	Log.d(LOG_TAG, "I either have a null image path or bitmap");
+                            Log.d(LOG_TAG, "I either have a null image path or bitmap");
                             this.failPicture("Unable to create bitmap!");
                             return;
                         }
@@ -464,8 +446,8 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
                             }
                         }
                         if (bitmap != null) {
-	                        bitmap.recycle();
-	                        bitmap = null;
+                            bitmap.recycle();
+                            bitmap = null;
                         }
                         System.gc();
                     }
@@ -543,6 +525,29 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
             }
         }
         return uri;
+    }
+
+    /**
+     * Compress bitmap using jpeg, convert to Base64 encoded string, and return to JavaScript.
+     *
+     * @param bitmap
+     */
+    public void processPicture(Bitmap bitmap) {
+        ByteArrayOutputStream jpeg_data = new ByteArrayOutputStream();
+        try {
+            if (bitmap.compress(CompressFormat.JPEG, mQuality, jpeg_data)) {
+                byte[] code = jpeg_data.toByteArray();
+                byte[] output = Base64.encodeBase64(code);
+                String js_out = new String(output);
+                this.success(new PluginResult(PluginResult.Status.OK, js_out), this.callbackId);
+                js_out = null;
+                output = null;
+                code = null;
+            }
+        } catch (Exception e) {
+            this.failPicture("Error compressing image.");
+        }
+        jpeg_data = null;
     }
 
     /**
@@ -640,6 +645,125 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
             return srcHeight / dstHeight;
         }
       }
+    
+    /**
+     * Scales the bitmap according to the requested size.
+     * 
+     * @param bitmap        The bitmap to scale.
+     * @return Bitmap       A new Bitmap object of the same bitmap after scaling. 
+     */
+    public Bitmap scaleBitmap(Bitmap bitmap) {
+        int newWidth = this.targetWidth;
+        int newHeight = this.targetHeight;
+        int origWidth = bitmap.getWidth();
+        int origHeight = bitmap.getHeight();
+
+        // If no new width or height were specified return the original bitmap
+        if (newWidth <= 0 && newHeight <= 0) {
+            return bitmap;
+        }
+        // Only the width was specified
+        else if (newWidth > 0 && newHeight <= 0) {
+            newHeight = (newWidth * origHeight) / origWidth;
+        }
+        // only the height was specified
+        else if (newWidth <= 0 && newHeight > 0) {
+            newWidth = (newHeight * origWidth) / origHeight;
+        }
+        // If the user specified both a positive width and height
+        // (potentially different aspect ratio) then the width or height is
+        // scaled so that the image fits while maintaining aspect ratio.
+        // Alternatively, the specified width and height could have been
+        // kept and Bitmap.SCALE_TO_FIT specified when scaling, but this
+        // would result in whitespace in the new image.
+        else {
+            double newRatio = newWidth / (double)newHeight;
+            double origRatio = origWidth / (double)origHeight;
+
+            if (origRatio > newRatio) {
+                newHeight = (newWidth * origHeight) / origWidth;
+            } else if (origRatio < newRatio) {
+                newWidth = (newHeight * origWidth) / origHeight;
+            }
+        }
+        
+        return Bitmap.createScaledBitmap(bitmap, newWidth, newHeight, true);
+    }
+
+    /**
+     * Creates a cursor that can be used to determine how many images we have.
+     * 
+     * @return a cursor
+     */
+    private Cursor queryImgDB() {
+        return this.cordova.getActivity().getContentResolver().query(
+                android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+                new String[] { MediaStore.Images.Media._ID },
+                null,
+                null,
+                null);
+    }
+    
+    /**
+     * Used to find out if we are in a situation where the Camera Intent adds to images
+     * to the content store. If we are using a FILE_URI and the number of images in the DB 
+     * increases by 2 we have a duplicate, when using a DATA_URL the number is 1.
+     */
+    private void checkForDuplicateImage() {
+        int diff = 2;
+        Cursor cursor = queryImgDB();
+        int currentNumOfImages = cursor.getCount();
+        
+        // delete the duplicate file if the difference is 2 for file URI or 1 for Data URL
+        if ((currentNumOfImages - numPics) == diff) {
+            cursor.moveToLast();
+            int id = Integer.valueOf(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._ID))) - 1;                    
+            Uri uri = Uri.parse(MediaStore.Images.Media.EXTERNAL_CONTENT_URI + "/" + id);
+            this.cordova.getActivity().getContentResolver().delete(uri, null, null);
+        }
+    }
+    
+    /**
+     * Determine if we can use the SD Card to store the temporary file.  If not then use 
+     * the internal cache directory.
+     * 
+     * @return the absolute path of where to store the file
+     */
+    private String getTempDirectoryPath(Context ctx) {
+        File cache = null;
+        
+        // SD Card Mounted
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            cache = new File(Environment.getExternalStorageDirectory().getAbsolutePath() + 
+                    "/Android/data/" + ctx.getPackageName() + "/cache/");
+        } 
+        // Use internal storage
+        else {
+            cache = ctx.getCacheDir();
+        }
+
+        // Create the cache directory if it doesn't exist
+        if (!cache.exists()) {
+            cache.mkdirs();
+        }
+
+        return cache.getAbsolutePath();
+    }
+    
+    /**
+     * Queries the media store to find out what the file path is for the Uri we supply
+     *
+     * @param contentUri the Uri of the audio/image/video
+     * @param ctx the current applicaiton context
+     * @return the full path to the file
+     */
+    private String getRealPathFromURI(Uri contentUri, CordovaInterface ctx) {
+        String[] proj = { _DATA };
+        Cursor cursor = this.cordova.getActivity().managedQuery(contentUri, proj, null, null, null);
+        int column_index = cursor.getColumnIndexOrThrow(_DATA);
+        cursor.moveToFirst();
+        return cursor.getString(column_index);
+    }    
 
     /**
      * Creates a cursor that can be used to determine how many images we have.
@@ -715,29 +839,6 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
         } else {
             return android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI;
         }
-    }
-
-    /**
-     * Compress bitmap using jpeg, convert to Base64 encoded string, and return to JavaScript.
-     *
-     * @param bitmap
-     */
-    public void processPicture(Bitmap bitmap) {
-        ByteArrayOutputStream jpeg_data = new ByteArrayOutputStream();
-        try {
-            if (bitmap.compress(CompressFormat.JPEG, mQuality, jpeg_data)) {
-                byte[] code = jpeg_data.toByteArray();
-                byte[] output = Base64.encodeBase64(code);
-                String js_out = new String(output);
-                this.success(new PluginResult(PluginResult.Status.OK, js_out), this.callbackId);
-                js_out = null;
-                output = null;
-                code = null;
-            }
-        } catch (Exception e) {
-            this.failPicture("Error compressing image.");
-        }
-        jpeg_data = null;
     }
 
     /**
