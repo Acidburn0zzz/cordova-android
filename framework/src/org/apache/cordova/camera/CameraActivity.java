@@ -1,12 +1,14 @@
 package org.apache.cordova.camera;
 
 import java.io.File;
+
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
 import org.apache.cordova.R;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
 import android.hardware.Camera;
@@ -20,18 +22,23 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.RelativeLayout;
 
+@SuppressLint("NewApi")
 public class CameraActivity extends Activity {
 
     protected static final String TAG = "CameraActivity";
     private Camera mCamera;
     private Preview mPreview;
-    private Activity that;
+    private CameraActivity that;
+    private boolean debounce = false;
 
     class AFCallback implements Camera.AutoFocusCallback {
         public void onAutoFocus(boolean success, Camera camera)
         {
             Log.d(TAG, "AutoFocus has completed");
+            camera.takePicture(null, null, mPicture);
+            debounce = true;
         }
     }
     
@@ -46,6 +53,10 @@ public class CameraActivity extends Activity {
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                 WindowManager.LayoutParams.FLAG_FULLSCREEN);
         
+        /*
+         * Do the initialization of the interface here
+         */
+        
         setContentView(R.layout.camera);
 
         // Create an instance of Camera
@@ -57,16 +68,23 @@ public class CameraActivity extends Activity {
         mPreview = new Preview(this, mCamera);
         FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
         preview.addView(mPreview);
-        
+        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB_MR2)
+            preview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
         // Add a listener to the Capture button
         Log.d(TAG, "setup button listener");
         Button captureButton = (Button) findViewById(R.id.button_capture);
+        captureButton.setBackgroundResource(R.drawable.take_pic);
+        RelativeLayout buttonContainer = (RelativeLayout) findViewById(R.id.button_container);
+        buttonContainer.setBackgroundResource(R.drawable.widget_back);
         captureButton.setOnClickListener(
             new View.OnClickListener() {
+
                 //@Override
                 public void onClick(View v) {
-                    // get an image from the camera
-                    mCamera.takePicture(null, null, mPicture);
+                    if(!debounce)
+                    {
+                        mCamera.autoFocus(new AFCallback());
+                    }
                 }
             }
         );
@@ -79,8 +97,11 @@ public class CameraActivity extends Activity {
             mCamera.release();        // release the camera for other applications
             mCamera = null;
         }
+        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB_MR2)
+            mPreview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_VISIBLE);
         super.onPause();
     }    
+    
     
     /** A safe way to get an instance of the Camera object. */
     public static Camera getCameraInstance(){
