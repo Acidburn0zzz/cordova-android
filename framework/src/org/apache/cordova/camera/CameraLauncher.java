@@ -2,6 +2,7 @@ package org.apache.cordova.camera;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -29,6 +30,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Matrix;
 import android.graphics.Bitmap.CompressFormat;
 import android.media.MediaScannerConnection;
+import android.media.MediaScannerConnection.MediaScannerConnectionClient;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
@@ -40,7 +42,7 @@ import android.util.Log;
  * and returns the captured image.  When the camera view is closed, the screen displayed before 
  * the camera view was shown is redisplayed.
  */
-public class CameraLauncher extends Plugin {
+public class CameraLauncher extends Plugin implements MediaScannerConnectionClient {
 
     private static final int DATA_URL = 0;              // Return base64 encoded string
     private static final int FILE_URI = 1;              // Return file uri (content://media/external/images/media/2 for Android)
@@ -242,14 +244,109 @@ public class CameraLauncher extends Plugin {
         if (srcType == CAMERA) {        
             // If image available
             if (resultCode == Activity.RESULT_OK) {
-                Log.d(LOG_TAG, "Just returning the path to the image with no manipulation");
-                this.success(new PluginResult(PluginResult.Status.OK, this.imageUri.toString()), this.callbackId);
+                try {
+                    Log.d(LOG_TAG, "In Camera");
+                    // Create an ExifHelper to save the exif data that is lost during compression
+                    ExifHelper exif = new ExifHelper();
+                    try {
+                        if (this.encodingType == JPEG) {
+                            Log.d(LOG_TAG, "Getting exif for = " + DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()) + "/.Pic.jpg");
+                            exif.createInFile(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()) + "/.Pic.jpg");
+                            exif.readExifData();
+                            rotate = exif.getOrientation();
+                            Log.d(LOG_TAG, "Rotate is now = " + rotate);
+                        }
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+
+                    Bitmap bitmap = null;
+                    Uri uri = null;
+
+                    // If sending base64 image back
+                    if (destType == DATA_URL) {
+                        Log.d(LOG_TAG, "it's a data url");
+                        bitmap = getScaledBitmap(FileUtils.stripFileProtocol(imageUri.toString()));
+
+                        if (rotate != 0 && this.correctOrientation) {
+                            bitmap = getRotatedBitmap(rotate, bitmap, exif);
+                        }
+
+                        this.processPicture(bitmap);
+                        checkForDuplicateImage(DATA_URL);
+                    }
+
+                    // If sending filename back
+                    else if (destType == FILE_URI) {
+                        Log.d(LOG_TAG, "it's a file url");
+                        if (!this.saveToPhotoAlbum) {
+                            uri = Uri.fromFile(new File(DirectoryManager.getTempDirectoryPath(this.cordova.getActivity()), System.currentTimeMillis() + ".jpg"));
+                        } else {
+                            uri = getUriFromMediaStore();
+                        }
+
+                        if (uri == null) {
+                            this.failPicture("Error capturing image - no media storage found.");
+                        }
+                        
+                        Log.d(LOG_TAG, "Height = " + this.targetHeight);
+                        Log.d(LOG_TAG, "Width = " + this.targetWidth);
+                        Log.d(LOG_TAG, "Quality = " + this.mQuality);
+                        Log.d(LOG_TAG, "rotate = " + rotate);
+
+                        // If all this is true we shouldn't compress the image.
+                        if (this.targetHeight == -1 && this.targetWidth == -1 && this.mQuality == 100 && rotate == 0) {
+                            Log.d(LOG_TAG, "change nothing and return file");
+                            writeUncompressedImage(uri);
+
+                            this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                        } else {
+                            Log.d(LOG_TAG, "loading into bitmap");
+                            bitmap = getScaledBitmap(FileUtils.stripFileProtocol(imageUri.toString()));
+
+                            if (rotate != 0 && this.correctOrientation) {
+                                Log.d(LOG_TAG, "Rotating the bitmap");
+                                bitmap = getRotatedBitmap(rotate, bitmap, exif);
+                            }
+
+                            // Add compressed version of captured image to returned media store Uri
+                            Log.d(LOG_TAG, "writing compressed data");
+                            OutputStream os = this.cordova.getActivity().getContentResolver().openOutputStream(uri);
+                            bitmap.compress(Bitmap.CompressFormat.JPEG, this.mQuality, os);
+                            os.close();
+
+                            // Restore exif data to file
+                            if (this.encodingType == JPEG) {
+                                Log.d(LOG_TAG, "restorning exif information");
+                                String exifPath;
+                                if (this.saveToPhotoAlbum) {
+                                    exifPath = FileUtils.getRealPathFromURI(uri, this.cordova);
+                                } else {
+                                    exifPath = uri.getPath();
+                                }
+                                exif.createOutFile(exifPath);
+                                exif.writeExifData();
+                            }
+
+                        }
+                        // Send Uri back to JavaScript for viewing image
+                        this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                    }
+
+                    this.cleanup(FILE_URI, this.imageUri, uri, bitmap);
+                    bitmap = null;
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                    this.failPicture("Error capturing image.");
+                }
             }
+
             // If cancelled
             else if (resultCode == Activity.RESULT_CANCELED) {
                 this.failPicture("Camera cancelled.");
             }
-    
+
             // If something else
             else {
                 this.failPicture("Did not complete!");
@@ -362,6 +459,71 @@ public class CameraLauncher extends Plugin {
                 this.failPicture("Selection did not complete!");
             }
         }
+    }
+
+    /**
+     * Figure out if the bitmap should be rotated. For instance if the picture was taken in
+     * portrait mode
+     *
+     * @param rotate
+     * @param bitmap
+     * @return rotated bitmap
+     */
+    private Bitmap getRotatedBitmap(int rotate, Bitmap bitmap, ExifHelper exif) {
+        Matrix matrix = new Matrix();
+        if (rotate == 180) {
+            matrix.setRotate(rotate);
+        } else {
+            matrix.setRotate(rotate, (float) bitmap.getWidth() / 2, (float) bitmap.getHeight() / 2);
+        }
+        bitmap = Bitmap.createBitmap(bitmap, 0, 0, bitmap.getWidth(), bitmap.getHeight(), matrix, true);
+        exif.resetOrientation();
+        return bitmap;
+    }
+
+    /**
+     * In the special case where the default width, height and quality are unchanged
+     * we just write the file out to disk saving the expensive Bitmap.compress function.
+     *
+     * @param uri
+     * @throws FileNotFoundException
+     * @throws IOException
+     */
+    private void writeUncompressedImage(Uri uri) throws FileNotFoundException,
+            IOException {
+        FileInputStream fis = new FileInputStream(FileUtils.stripFileProtocol(imageUri.toString()));
+        OutputStream os = this.cordova.getActivity().getContentResolver().openOutputStream(uri);
+        byte[] buffer = new byte[4096];
+        int len;
+        while ((len = fis.read(buffer)) != -1) {
+            os.write(buffer, 0, len);
+        }
+        os.flush();
+        os.close();
+        fis.close();
+    }
+
+    /**
+     * Create entry in media store for image
+     *
+     * @return uri
+     */
+    private Uri getUriFromMediaStore() {
+        ContentValues values = new ContentValues();
+        values.put(android.provider.MediaStore.Images.Media.MIME_TYPE, "image/jpeg");
+        Uri uri;
+        try {
+            uri = this.cordova.getActivity().getContentResolver().insert(android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI, values);
+        } catch (UnsupportedOperationException e) {
+            LOG.d(LOG_TAG, "Can't write to external media storage.");
+            try {
+                uri = this.cordova.getActivity().getContentResolver().insert(android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI, values);
+            } catch (UnsupportedOperationException ex) {
+                LOG.d(LOG_TAG, "Can't write to internal media storage.");
+                return null;
+            }
+        }
+        return uri;
     }
 
     /**
@@ -603,11 +765,109 @@ public class CameraLauncher extends Plugin {
     }    
 
     /**
+     * Creates a cursor that can be used to determine how many images we have.
+     *
+     * @return a cursor
+     */
+    private Cursor queryImgDB(Uri contentStore) {
+        return this.cordova.getActivity().getContentResolver().query(
+                contentStore,
+                new String[] { MediaStore.Images.Media._ID },
+                null,
+                null,
+                null);
+    }
+
+    /**
+     * Cleans up after picture taking. Checking for duplicates and that kind of stuff.
+     * @param newImage
+     */
+    private void cleanup(int imageType, Uri oldImage, Uri newImage, Bitmap bitmap) {
+        if (bitmap != null) {
+            bitmap.recycle();
+        }
+
+        // Clean up initial camera-written image file.
+        (new File(FileUtils.stripFileProtocol(oldImage.toString()))).delete();
+
+        checkForDuplicateImage(imageType);
+        // Scan for the gallery to update pic refs in gallery
+        if (this.saveToPhotoAlbum && newImage != null) {
+            this.scanForGallery(newImage);
+        }
+
+        System.gc();
+    }
+
+    /**
+     * Used to find out if we are in a situation where the Camera Intent adds to images
+     * to the content store. If we are using a FILE_URI and the number of images in the DB
+     * increases by 2 we have a duplicate, when using a DATA_URL the number is 1.
+     *
+     * @param type FILE_URI or DATA_URL
+     */
+    private void checkForDuplicateImage(int type) {
+        int diff = 1;
+        Uri contentStore = whichContentStore();
+        Cursor cursor = queryImgDB(contentStore);
+        int currentNumOfImages = cursor.getCount();
+
+        if (type == FILE_URI && this.saveToPhotoAlbum) {
+            diff = 2;
+        }
+
+        // delete the duplicate file if the difference is 2 for file URI or 1 for Data URL
+        if ((currentNumOfImages - numPics) == diff) {
+            cursor.moveToLast();
+            int id = Integer.valueOf(cursor.getString(cursor.getColumnIndex(MediaStore.Images.Media._ID)));
+            if (diff == 2) {
+                id--;
+            }
+            Uri uri = Uri.parse(contentStore + "/" + id);
+            this.cordova.getActivity().getContentResolver().delete(uri, null, null);
+        }
+    }
+
+    /**
+     * Determine if we are storing the images in internal or external storage
+     * @return Uri
+     */
+    private Uri whichContentStore() {
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            return android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+        } else {
+            return android.provider.MediaStore.Images.Media.INTERNAL_CONTENT_URI;
+        }
+    }
+
+    /**
      * Send error message to JavaScript.
      *
      * @param err
      */
     public void failPicture(String err) {
         this.error(new PluginResult(PluginResult.Status.ERROR, err), this.callbackId);
+    }
+
+    private void scanForGallery(Uri newImage) {
+        this.scanMe = newImage;
+        if(this.conn != null) {
+            this.conn.disconnect();
+        }
+        this.conn = new MediaScannerConnection(this.ctx.getActivity().getApplicationContext(), this);
+        conn.connect();
+    }
+
+    public void onMediaScannerConnected() {
+        try{
+            this.conn.scanFile(this.scanMe.toString(), "image/*");
+        } catch (java.lang.IllegalStateException e){
+            LOG.e(LOG_TAG, "Can't scan file in MediaScanner after taking picture");
+        }
+
+    }
+
+    public void onScanCompleted(String path, Uri uri) {
+        this.conn.disconnect();
     }
 }

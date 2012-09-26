@@ -7,6 +7,7 @@ import java.io.IOException;
 
 import org.apache.cordova.R;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
@@ -25,6 +26,7 @@ public class CameraActivity extends Activity {
     protected static final String TAG = "CameraActivity";
     private Camera mCamera;
     private Preview mPreview;
+    private Activity that;
 
     class AFCallback implements Camera.AutoFocusCallback {
         public void onAutoFocus(boolean success, Camera camera)
@@ -38,6 +40,7 @@ public class CameraActivity extends Activity {
         super.onCreate(savedInstanceState);
         Log.d(TAG, "In CameraActivity");
         Log.d(TAG, "explode layout");
+        that = this;
         
         getWindow().requestFeature(Window.FEATURE_NO_TITLE);
         getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
@@ -94,8 +97,12 @@ public class CameraActivity extends Activity {
     private PictureCallback mPicture = new PictureCallback() {
 
         //@Override
+        @TargetApi(8)
         public void onPictureTaken(byte[] data, Camera camera) {
             Log.d(TAG, "in onpicturetaken");
+            
+            int rotation = that.getWindowManager().getDefaultDisplay().getRotation();
+            Log.d(TAG, "Rotation is = " + rotation);
 
             Uri fileUri = (Uri) getIntent().getExtras().get(MediaStore.EXTRA_OUTPUT);
             Log.d(TAG, "using uri = " + fileUri.toString());
