@@ -32,6 +32,7 @@ public class CameraActivity extends Activity {
     private Preview mPreview;
     private CameraActivity that;
     private boolean debounce = false;
+    private ZoomListener mZoom;
 
     class AFCallback implements Camera.AutoFocusCallback {
         public void onAutoFocus(boolean success, Camera camera)
@@ -41,6 +42,37 @@ public class CameraActivity extends Activity {
             debounce = true;
         }
     }
+    
+    class ZoomListener implements Slider.SliderPositionListener {
+        Camera.Parameters params; 
+        int limit; 
+        
+        ZoomListener()
+        {
+            params = mCamera.getParameters();
+            if(params.isZoomSupported())
+            {
+                limit = params.getMaxZoom();
+            }
+        }
+        
+        public void onPositionChange(double value) {
+            Log.d(TAG, "We are zooming in to: " + Double.toString(value));
+            if(params.isZoomSupported())
+            {
+                int zoomVal = (int) (value * limit);
+                if(params.isSmoothZoomSupported())
+                {
+                    mCamera.startSmoothZoom(zoomVal);
+                }
+                else
+                {
+                    params.setZoom(zoomVal);
+                }
+            }
+        }
+    }
+
     
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -88,6 +120,11 @@ public class CameraActivity extends Activity {
                 }
             }
         );
+        
+        Slider zoomSlider = (Slider) findViewById(R.id.zoom_slider);
+        mZoom = new ZoomListener();
+        zoomSlider.setPositionListener(mZoom);
+        
     }
 
     @Override
