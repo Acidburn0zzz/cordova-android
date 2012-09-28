@@ -61,14 +61,8 @@ public class CameraActivity extends Activity {
             if(params.isZoomSupported())
             {
                 int zoomVal = (int) (value * limit);
-                if(params.isSmoothZoomSupported())
-                {
-                    mCamera.startSmoothZoom(zoomVal);
-                }
-                else
-                {
-                    params.setZoom(zoomVal);
-                }
+                params.setZoom(zoomVal);
+                mCamera.setParameters(params);
             }
         }
     }

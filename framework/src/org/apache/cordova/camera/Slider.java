@@ -73,13 +73,8 @@ public class Slider extends View {
 		if (mPosition != position) {
 			invalidate();
 			mPosition = position;
+		    mListener.onPositionChange(mPosition);
 		}
-	}
-	
-	public void triggerPosition(double position)
-	{
-	    setPosition(position);
-	    mListener.onPositionChange(mPosition);
 	}
 
 	private OnTouchListener mClickListener = new OnTouchListener() {
@@ -96,10 +91,7 @@ public class Slider extends View {
 				position = Math.max(0, (x - r.left) / r.width());
 			}
 			position = Math.min(1, position);
-			if(m.getAction() == MotionEvent.ACTION_UP)
-			    triggerPosition(position);
-			else
-			    setPosition(position);
+			setPosition(position);
 			return true;
 		}
 	};
