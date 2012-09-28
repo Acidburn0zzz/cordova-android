@@ -89,36 +89,45 @@ public class CameraActivity extends Activity {
         Log.d(TAG, "get instance of camera");
         mCamera = getCameraInstance();
 
-        // Create our Preview view and set it as the content of our activity.
-        Log.d(TAG, "create preview");
-        mPreview = new Preview(this, mCamera);
-        FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
-        preview.addView(mPreview);
-        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB_MR2)
-            preview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
-        // Add a listener to the Capture button
-        Log.d(TAG, "setup button listener");
-        Button captureButton = (Button) findViewById(R.id.button_capture);
-        captureButton.setBackgroundResource(R.drawable.take_pic);
-        RelativeLayout buttonContainer = (RelativeLayout) findViewById(R.id.button_container);
-        buttonContainer.setBackgroundResource(R.drawable.widget_back);
-        captureButton.setOnClickListener(
-            new View.OnClickListener() {
-
-                //@Override
-                public void onClick(View v) {
-                    if(!debounce)
-                    {
-                        mCamera.autoFocus(new AFCallback());
+        if(mCamera == null)
+        {
+            // There's no camera here, finish this application
+            // Note: We shouldn't get here if the developer specifies
+            // the permissions right in the Android Manifest.
+            this.finish();
+        }
+        else
+        {
+            // Create our Preview view and set it as the content of our activity.
+            Log.d(TAG, "create preview");
+            mPreview = new Preview(this, mCamera);
+            FrameLayout preview = (FrameLayout) findViewById(R.id.camera_preview);
+            preview.addView(mPreview);
+            if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB_MR2)
+                preview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+            // Add a listener to the Capture button
+            Log.d(TAG, "setup button listener");
+            Button captureButton = (Button) findViewById(R.id.button_capture);
+            captureButton.setBackgroundResource(R.drawable.take_pic);
+            RelativeLayout buttonContainer = (RelativeLayout) findViewById(R.id.button_container);
+            buttonContainer.setBackgroundResource(R.drawable.widget_back);
+            captureButton.setOnClickListener(
+                new View.OnClickListener() {
+    
+                    //@Override
+                    public void onClick(View v) {
+                        if(!debounce)
+                        {
+                            mCamera.autoFocus(new AFCallback());
+                        }
                     }
                 }
-            }
-        );
-        
-        Slider zoomSlider = (Slider) findViewById(R.id.zoom_slider);
-        mZoom = new ZoomListener();
-        zoomSlider.setPositionListener(mZoom);
-        
+            );
+            
+            Slider zoomSlider = (Slider) findViewById(R.id.zoom_slider);
+            mZoom = new ZoomListener();
+            zoomSlider.setPositionListener(mZoom);
+        }
     }
 
     @Override
