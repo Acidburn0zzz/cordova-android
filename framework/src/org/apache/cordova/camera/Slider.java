@@ -77,6 +77,24 @@ public class Slider extends View {
 		}
 	}
 
+	public void increment()
+	{
+	    double position = mPosition + 0.1; 
+	    if(position < 1)
+	        setPosition(position);
+	    else
+	        setPosition(1);
+	}
+	
+	public void decrement()
+	{
+	      double position = mPosition - 0.1; 
+	        if(position > 0)
+	            setPosition(position);
+	        else
+	            setPosition(0);
+	}
+	
 	private OnTouchListener mClickListener = new OnTouchListener() {
 		public boolean onTouch(View v, MotionEvent m) {
 			Rect r = new Rect();

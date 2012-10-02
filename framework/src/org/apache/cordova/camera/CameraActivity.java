@@ -33,6 +33,8 @@ public class CameraActivity extends Activity {
     private CameraActivity that;
     private boolean debounce = false;
     private ZoomListener mZoom;
+    Slider zoomSlider;
+
 
     class AFCallback implements Camera.AutoFocusCallback {
         public void onAutoFocus(boolean success, Camera camera)
@@ -109,8 +111,6 @@ public class CameraActivity extends Activity {
             Log.d(TAG, "setup button listener");
             Button captureButton = (Button) findViewById(R.id.button_capture);
             captureButton.setBackgroundResource(R.drawable.take_pic);
-            RelativeLayout buttonContainer = (RelativeLayout) findViewById(R.id.button_container);
-            buttonContainer.setBackgroundResource(R.drawable.widget_back);
             captureButton.setOnClickListener(
                 new View.OnClickListener() {
     
@@ -124,9 +124,26 @@ public class CameraActivity extends Activity {
                 }
             );
             
-            Slider zoomSlider = (Slider) findViewById(R.id.zoom_slider);
+            zoomSlider  = (Slider) findViewById(R.id.zoom_slider);
             mZoom = new ZoomListener();
             zoomSlider.setPositionListener(mZoom);
+            
+            Button zoomOut = (Button) findViewById(R.id.zoom_out);
+            zoomOut.setOnClickListener(
+               new View.OnClickListener() {
+                    public void onClick(View v) {
+                        zoomSlider.decrement();
+                    }
+               }
+            );
+            Button zoomIn = (Button) findViewById(R.id.zoom_in);
+            zoomIn.setOnClickListener(
+               new View.OnClickListener() {
+                    public void onClick(View v) {
+                        zoomSlider.increment();
+                    }
+               }
+            );
         }
     }
 
