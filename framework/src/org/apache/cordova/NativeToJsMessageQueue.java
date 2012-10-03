@@ -36,7 +36,7 @@ public class NativeToJsMessageQueue {
     private static final String LOG_TAG = "JsMessageQueue";
 
     // This must match the default value in incubator-cordova-js/lib/android/exec.js
-    private static final int DEFAULT_BRIDGE_MODE = 3;
+    private static final int DEFAULT_BRIDGE_MODE = 2;
     
     // Set this to true to force plugin results to be encoding as
     // JS instead of the custom format (useful for benchmarking).
@@ -80,12 +80,11 @@ public class NativeToJsMessageQueue {
     public NativeToJsMessageQueue(CordovaWebView webView, CordovaInterface cordova) {
         this.cordova = cordova;
         this.webView = webView;
-        registeredListeners = new BridgeMode[5];
+        registeredListeners = new BridgeMode[4];
         registeredListeners[0] = null;  // Polling. Requires no logic.
-        registeredListeners[1] = new CallbackBridgeMode();
-        registeredListeners[2] = new LoadUrlBridgeMode();
-        registeredListeners[3] = new OnlineEventsBridgeMode();
-        registeredListeners[4] = new PrivateApiBridgeMode();
+        registeredListeners[1] = new LoadUrlBridgeMode();
+        registeredListeners[2] = new OnlineEventsBridgeMode();
+        registeredListeners[3] = new PrivateApiBridgeMode();
         reset();
     }
     
@@ -220,6 +219,10 @@ public class NativeToJsMessageQueue {
      * Add a JavaScript statement to the list.
      */
     public void addPluginResult(PluginResult result, String callbackId) {
+        if (callbackId == null) {
+            Log.e(LOG_TAG, "Got plugin result with no callbackId", new Throwable());
+            return;
+        }
         // Don't send anything if there is no result and there is no need to
         // clear the callbacks.
         boolean noResult = result.getStatus() == PluginResult.Status.NO_RESULT.ordinal();
@@ -270,15 +273,6 @@ public class NativeToJsMessageQueue {
         void onNativeToJsMessageAvailable();
     }
     
-    /** Uses a local server to send messages to JS via an XHR */
-    private class CallbackBridgeMode implements BridgeMode {
-        public void onNativeToJsMessageAvailable() {
-            if (webView.callbackServer != null) {
-                webView.callbackServer.onNativeToJsMessageAvailable(NativeToJsMessageQueue.this);
-            }
-        }
-    }
-    
     /** Uses webView.loadUrl("javascript:") to execute messages. */
     private class LoadUrlBridgeMode implements BridgeMode {
         final Runnable runnable = new Runnable() {
@@ -320,67 +314,73 @@ public class NativeToJsMessageQueue {
      * Requires Android 3.2.4 or above. 
      */
     private class PrivateApiBridgeMode implements BridgeMode {
-    	// Message added in commit:
-    	// http://omapzoom.org/?p=platform/frameworks/base.git;a=commitdiff;h=9497c5f8c4bc7c47789e5ccde01179abc31ffeb2
-    	// Which first appeared in 3.2.4ish.
-    	private static final int EXECUTE_JS = 194;
-    	
-    	Method sendMessageMethod;
-    	Object webViewCore;
-    	boolean initFailed;
+        // Message added in commit:
+        // http://omapzoom.org/?p=platform/frameworks/base.git;a=commitdiff;h=9497c5f8c4bc7c47789e5ccde01179abc31ffeb2
+        // Which first appeared in 3.2.4ish.
+        private static final int EXECUTE_JS = 194;
+        
+        Method sendMessageMethod;
+        Object webViewCore;
+        boolean initFailed;
 
-    	@SuppressWarnings("rawtypes")
-    	private void initReflection() {
-        	Object webViewObject = webView;
-    		Class webViewClass = WebView.class;
-        	try {
-    			Field f = webViewClass.getDeclaredField("mProvider");
-    			f.setAccessible(true);
-    			webViewObject = f.get(webView);
-    			webViewClass = webViewObject.getClass();
-        	} catch (Throwable e) {
-        		// mProvider is only required on newer Android releases.
-    		}
-        	
-        	try {
-    			Field f = webViewClass.getDeclaredField("mWebViewCore");
+        @SuppressWarnings("rawtypes")
+        private void initReflection() {
+            Object webViewObject = webView;
+            Class webViewClass = WebView.class;
+            try {
+                Field f = webViewClass.getDeclaredField("mProvider");
                 f.setAccessible(true);
-    			webViewCore = f.get(webViewObject);
-    			
-    			if (webViewCore != null) {
-    				sendMessageMethod = webViewCore.getClass().getDeclaredMethod("sendMessage", Message.class);
-	    			sendMessageMethod.setAccessible(true);	    			
-    			}
-    		} catch (Throwable e) {
-    			initFailed = true;
-				Log.e(LOG_TAG, "PrivateApiBridgeMode failed to find the expected APIs.", e);
-    		}
-    	}
-    	
+                webViewObject = f.get(webView);
+                webViewClass = webViewObject.getClass();
+            } catch (Throwable e) {
+                // mProvider is only required on newer Android releases.
+            }
+            
+            try {
+                Field f = webViewClass.getDeclaredField("mWebViewCore");
+                f.setAccessible(true);
+                webViewCore = f.get(webViewObject);
+                
+                if (webViewCore != null) {
+                    sendMessageMethod = webViewCore.getClass().getDeclaredMethod("sendMessage", Message.class);
+                    sendMessageMethod.setAccessible(true);                  
+                }
+            } catch (Throwable e) {
+                initFailed = true;
+                Log.e(LOG_TAG, "PrivateApiBridgeMode failed to find the expected APIs.", e);
+            }
+        }
+        
         public void onNativeToJsMessageAvailable() {
-        	if (sendMessageMethod == null && !initFailed) {
-        		initReflection();
-        	}
-        	// webViewCore is lazily initialized, and so may not be available right away.
-        	if (sendMessageMethod != null) {
-	        	String js = popAndEncodeAsJs();
-	        	Message execJsMessage = Message.obtain(null, EXECUTE_JS, js);
-				try {
-				    sendMessageMethod.invoke(webViewCore, execJsMessage);
-				} catch (Throwable e) {
-					Log.e(LOG_TAG, "Reflection message bridge failed.", e);
-				}
-        	}
+            if (sendMessageMethod == null && !initFailed) {
+                initReflection();
+            }
+            // webViewCore is lazily initialized, and so may not be available right away.
+            if (sendMessageMethod != null) {
+                String js = popAndEncodeAsJs();
+                Message execJsMessage = Message.obtain(null, EXECUTE_JS, js);
+                try {
+                    sendMessageMethod.invoke(webViewCore, execJsMessage);
+                } catch (Throwable e) {
+                    Log.e(LOG_TAG, "Reflection message bridge failed.", e);
+                }
+            }
         }
     }    
     private static class JsMessage {
         final String jsPayloadOrCallbackId;
         final PluginResult pluginResult;
         JsMessage(String js) {
+            if (js == null) {
+                throw new NullPointerException();
+            }
             jsPayloadOrCallbackId = js;
             pluginResult = null;
         }
         JsMessage(PluginResult pluginResult, String callbackId) {
+            if (callbackId == null || pluginResult == null) {
+                throw new NullPointerException();
+            }
             jsPayloadOrCallbackId = callbackId;
             this.pluginResult = pluginResult;
         }

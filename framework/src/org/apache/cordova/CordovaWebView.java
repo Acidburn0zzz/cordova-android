@@ -67,7 +67,6 @@ public class CordovaWebView extends WebView {
     private ArrayList<Integer> keyUpCodes = new ArrayList<Integer>();
 
     public PluginManager pluginManager;
-    public CallbackServer callbackServer;
     private boolean paused;
     
     private BroadcastReceiver receiver;
@@ -482,7 +481,9 @@ public class CordovaWebView extends WebView {
         if (LOG.isLoggable(LOG.DEBUG) && !url.startsWith("javascript:")) {
             LOG.d(TAG, ">>> loadUrlNow()");
         }
-        super.loadUrl(url);
+        if (url.startsWith("file://") || url.indexOf(this.baseUrl) == 0 || url.startsWith("javascript:") || this.isUrlWhiteListed(url)) {
+            super.loadUrl(url);            
+        }
     }
 
     /**

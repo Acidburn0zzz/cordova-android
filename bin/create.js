@@ -37,6 +37,10 @@ function setTarget() {
     var targets = shell.Exec('android.bat list targets').StdOut.ReadAll().match(/id:\s\d+/g);
     return targets[targets.length - 1].replace(/id: /, ""); // TODO: give users the option to set their target 
 }
+function setApiLevel() {
+    var targets = shell.Exec('android.bat list targets').StdOut.ReadAll().match(/API level:\s\d+/g);
+    return targets[targets.length - 1].replace(/API level: /, "");
+}
 function write(filename, contents) {
     var fso=WScript.CreateObject("Scripting.FileSystemObject");
     var f=fso.OpenTextFile(filename, 2, true);
@@ -145,6 +149,7 @@ var PACKAGE_AS_PATH=PACKAGE.replace(/\./g, '\\');
 var ACTIVITY_PATH=PROJECT_PATH+'\\src\\'+PACKAGE_AS_PATH+'\\'+ACTIVITY+'.java';
 var MANIFEST_PATH=PROJECT_PATH+'\\AndroidManifest.xml';
 var TARGET=setTarget();
+var API_LEVEL=setApiLevel();
 var VERSION=read(ROOT+'\\VERSION').replace(/\r\n/,'').replace(/\n/,'');
 // create the project
 WScript.Echo("Creating new android project...");
@@ -163,40 +168,40 @@ if (!fso.FileExists(ROOT+'\\cordova-'+VERSION+'.jar') &&
 
 // copy in the project template
 WScript.Echo("Copying template files...");
-exec('%comspec% /c xcopy '+ ROOT + '\\bin\\templates\\project\\res '+PROJECT_PATH+'\\res\\ /E /Y');
-exec('%comspec% /c xcopy '+ ROOT + '\\bin\\templates\\project\\assets '+PROJECT_PATH+'\\assets\\ /E /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\project\\AndroidManifest.xml ' + PROJECT_PATH + '\\AndroidManifest.xml /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\project\\Activity.java '+ ACTIVITY_PATH +' /Y');
+exec('%comspec% /c xcopy "'+ ROOT + '"\\bin\\templates\\project\\res '+PROJECT_PATH+'\\res\\ /E /Y');
+exec('%comspec% /c xcopy "'+ ROOT + '"\\bin\\templates\\project\\assets '+PROJECT_PATH+'\\assets\\ /E /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\project\\AndroidManifest.xml ' + PROJECT_PATH + '\\AndroidManifest.xml /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\project\\Activity.java '+ ACTIVITY_PATH +' /Y');
 
 // check if we have the source or the distro files
 WScript.Echo("Copying js, jar & config.xml files...");
 if(fso.FolderExists(ROOT + '\\framework')) {
-    exec('%comspec% /c copy '+ROOT+'\\framework\\assets\\www\\cordova-'+VERSION+'.js '+PROJECT_PATH+'\\assets\\www\\cordova-'+VERSION+'.js /Y');
-    exec('%comspec% /c copy '+ROOT+'\\framework\\cordova-'+VERSION+'.jar '+PROJECT_PATH+'\\libs\\cordova-'+VERSION+'.jar /Y');
+    exec('%comspec% /c copy "'+ROOT+'"\\framework\\assets\\www\\cordova-'+VERSION+'.js '+PROJECT_PATH+'\\assets\\www\\cordova-'+VERSION+'.js /Y');
+    exec('%comspec% /c copy "'+ROOT+'"\\framework\\cordova-'+VERSION+'.jar '+PROJECT_PATH+'\\libs\\cordova-'+VERSION+'.jar /Y');
     fso.CreateFolder(PROJECT_PATH + '\\res\\xml');
-    exec('%comspec% /c copy '+ROOT+'\\framework\\res\\xml\\config.xml ' + PROJECT_PATH + '\\res\\xml\\config.xml /Y');
+    exec('%comspec% /c copy "'+ROOT+'"\\framework\\res\\xml\\config.xml ' + PROJECT_PATH + '\\res\\xml\\config.xml /Y');
 } else {
     // copy in cordova.js
-    exec('%comspec% /c copy '+ROOT+'\\cordova-'+VERSION+'.js '+PROJECT_PATH+'\\assets\\www\\cordova-'+VERSION+'.js /Y');
+    exec('%comspec% /c copy "'+ROOT+'"\\cordova-'+VERSION+'.js '+PROJECT_PATH+'\\assets\\www\\cordova-'+VERSION+'.js /Y');
     // copy in cordova.jar
-    exec('%comspec% /c copy '+ROOT+'\\cordova-'+VERSION+'.jar '+PROJECT_PATH+'\\libs\\cordova-'+VERSION+'.jar /Y');
+    exec('%comspec% /c copy "'+ROOT+'"\\cordova-'+VERSION+'.jar '+PROJECT_PATH+'\\libs\\cordova-'+VERSION+'.jar /Y');
     // copy in xml
     fso.CreateFolder(PROJECT_PATH + '\\res\\xml');
-    exec('%comspec% /c copy '+ROOT+'\\xml\\config.xml ' + PROJECT_PATH + '\\res\\xml\\config.xml /Y');
+    exec('%comspec% /c copy "'+ROOT+'"\\xml\\config.xml ' + PROJECT_PATH + '\\res\\xml\\config.xml /Y');
 }
 
 // copy cordova scripts
 fso.CreateFolder(PROJECT_PATH + '\\cordova');
 createAppInfoJar();
 WScript.Echo("Copying cordova command tools...");
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\cordova\\appinfo.jar ' + PROJECT_PATH + '\\cordova\\appinfo.jar /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\cordova\\cordova.js ' + PROJECT_PATH + '\\cordova\\cordova.js /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\cordova\\cordova.bat ' + PROJECT_PATH + '\\cordova\\cordova.bat /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\cordova\\clean.bat ' + PROJECT_PATH + '\\cordova\\clean.bat /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\cordova\\debug.bat ' + PROJECT_PATH + '\\cordova\\debug.bat /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\cordova\\log.bat ' + PROJECT_PATH + '\\cordova\\log.bat /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\cordova\\emulate.bat ' + PROJECT_PATH + '\\cordova\\emulate.bat /Y');
-exec('%comspec% /c copy '+ROOT+'\\bin\\templates\\cordova\\BOOM.bat ' + PROJECT_PATH + '\\cordova\\BOOM.bat /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\cordova\\appinfo.jar ' + PROJECT_PATH + '\\cordova\\appinfo.jar /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\cordova\\cordova.js ' + PROJECT_PATH + '\\cordova\\cordova.js /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\cordova\\cordova.bat ' + PROJECT_PATH + '\\cordova\\cordova.bat /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\cordova\\clean.bat ' + PROJECT_PATH + '\\cordova\\clean.bat /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\cordova\\debug.bat ' + PROJECT_PATH + '\\cordova\\debug.bat /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\cordova\\log.bat ' + PROJECT_PATH + '\\cordova\\log.bat /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\cordova\\emulate.bat ' + PROJECT_PATH + '\\cordova\\emulate.bat /Y');
+exec('%comspec% /c copy "'+ROOT+'"\\bin\\templates\\cordova\\BOOM.bat ' + PROJECT_PATH + '\\cordova\\BOOM.bat /Y');
 
 // interpolate the activity name and package
 WScript.Echo("Updating AndroidManifest.xml and Main Activity...");
@@ -205,5 +210,6 @@ replaceInFile(ACTIVITY_PATH, /__ID__/, PACKAGE);
 
 replaceInFile(MANIFEST_PATH, /__ACTIVITY__/, ACTIVITY);
 replaceInFile(MANIFEST_PATH, /__PACKAGE__/, PACKAGE);
+replaceInFile(MANIFEST_PATH, /__APILEVEL__/, API_LEVEL);
 
 cleanup();

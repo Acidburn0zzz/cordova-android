@@ -20,74 +20,91 @@ package org.apache.cordova.api;
 
 import org.apache.cordova.CordovaWebView;
 import org.json.JSONArray;
-
-//import android.content.Context;
+import org.json.JSONException;
 import android.content.Intent;
 
+
 /**
- * Plugin interface must be implemented by any plugin classes.
- *
- * The execute method is called by the PluginManager.
+ * Plugins must extend this class and override one of the execute methods.
  */
-public interface IPlugin {
+public class CordovaPlugin {
+    public String id;
+    public CordovaWebView webView;					// WebView object
+    public CordovaInterface cordova;
 
     /**
-     * Executes the request and returns PluginResult.
-     *
-     * @param action 		The action to execute.
-     * @param args 			JSONArry of arguments for the plugin.
-     * @param callbackId	The callback id used when calling back into JavaScript.
-     * @return 				A PluginResult object with a status and message.
-     */
-    PluginResult execute(String action, JSONArray args, String callbackId);
-
-    /**
-     * Identifies if action to be executed returns a value and should be run synchronously.
-     *
-     * @param action	The action to execute
-     * @return			T=returns value
-     */
-    public boolean isSynch(String action);
-
-    /**
-     * Sets the context of the Plugin. This can then be used to do things like
-     * get file paths associated with the Activity.
-     * 
      * @param ctx The context of the main Activity.
      */
-    void setContext(CordovaInterface ctx);
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        assert this.cordova == null;
+        this.cordova = cordova;
+        this.webView = webView;
+    }
+    
+    /**
+     * Executes the request.
+     * 
+     * This method is called from the WebView thread. To do a non-trivial amount of work, use:
+     *     cordova.getThreadPool().execute(runnable);
+     * 
+     * To run on the UI thread, use:
+     *     cordova.getActivity().runOnUiThread(runnable);
+     *
+     * @param action        The action to execute.
+     * @param rawArgs       The exec() arguments in JSON form.
+     * @param callbackId    The callback id used when calling back into JavaScript.
+     * @return              Whether the action was valid.
+     */
+    public boolean execute(String action, String rawArgs, CallbackContext callbackContext) throws JSONException {
+        JSONArray args = new JSONArray(rawArgs);
+        return execute(action, args, callbackContext);
+    }
 
     /**
-     * Sets the main View of the application, this is the WebView within which 
-     * a Cordova app runs.
+     * Executes the request.
      * 
-     * @param webView The Cordova WebView
+     * This method is called from the WebView thread. To do a non-trivial amount of work, use:
+     *     cordova.getThreadPool().execute(runnable);
+     * 
+     * To run on the UI thread, use:
+     *     cordova.getActivity().runOnUiThread(runnable);
+     *
+     * @param action        The action to execute.
+     * @param args          The exec() arguments.
+     * @param callbackId    The callback id used when calling back into JavaScript.
+     * @return              Whether the action was valid.
      */
-    void setView(CordovaWebView webView);
-
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        return false;
+    }
+    
     /**
      * Called when the system is about to start resuming a previous activity.
      *
      * @param multitasking		Flag indicating if multitasking is turned on for app
      */
-    void onPause(boolean multitasking);
+    public void onPause(boolean multitasking) {
+    }
 
     /**
      * Called when the activity will start interacting with the user.
      *
      * @param multitasking		Flag indicating if multitasking is turned on for app
      */
-    void onResume(boolean multitasking);
+    public void onResume(boolean multitasking) {
+    }
 
     /**
      * Called when the activity receives a new intent.
      */
-    void onNewIntent(Intent intent);
+    public void onNewIntent(Intent intent) {
+    }
 
     /**
      * The final call you receive before your activity is destroyed.
      */
-    void onDestroy();
+    public void onDestroy() {
+    }
 
     /**
      * Called when a message is sent to plugin.
@@ -96,7 +113,9 @@ public interface IPlugin {
      * @param data          The message data
      * @return              Object to stop propagation or null
      */
-    public Object onMessage(String id, Object data);
+    public Object onMessage(String id, Object data) {
+        return null;
+    }
 
     /**
      * Called when an activity you launched exits, giving you the requestCode you started it with,
@@ -107,7 +126,8 @@ public interface IPlugin {
      * @param resultCode		The integer result code returned by the child activity through its setResult().
      * @param data				An Intent, which can return result data to the caller (various data can be attached to Intent "extras").
      */
-    void onActivityResult(int requestCode, int resultCode, Intent intent);
+    public void onActivityResult(int requestCode, int resultCode, Intent intent) {
+    }
 
     /**
      * By specifying a <url-filter> in plugins.xml you can map a URL (using startsWith atm) to this method.
@@ -115,12 +135,17 @@ public interface IPlugin {
      * @param url				The URL that is trying to be loaded in the Cordova webview.
      * @return					Return true to prevent the URL from loading. Default is false.
      */
-    boolean onOverrideUrlLoading(String url);
+    public boolean onOverrideUrlLoading(String url) {
+        return false;
+    }
 
     /**
      * Called when the WebView does a top-level navigation or refreshes.
      *
      * Plugins should stop any long-running processes and clean up internal state.
+     *
+     * Does nothing by default.
      */
-    void onReset();
+    public void onReset() {
+    }
 }

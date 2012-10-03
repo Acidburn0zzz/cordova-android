@@ -1047,12 +1047,17 @@ public class FileUtils extends Plugin {
      * @return the full path to the file
      */
     @SuppressWarnings("deprecation")
-    protected
-    static String getRealPathFromURI(Uri contentUri, CordovaInterface cordova) {
-        String[] proj = { _DATA };
-        Cursor cursor = cordova.getActivity().managedQuery(contentUri, proj, null, null, null);
-        int column_index = cursor.getColumnIndexOrThrow(_DATA);
-        cursor.moveToFirst();
-        return cursor.getString(column_index);
+    protected static String getRealPathFromURI(Uri contentUri, CordovaInterface cordova) {
+        String uri = contentUri.toString();
+        if (uri.startsWith("content:")) {
+            String[] proj = { _DATA };
+            Cursor cursor = cordova.getActivity().managedQuery(contentUri, proj, null, null, null);
+            int column_index = cursor.getColumnIndexOrThrow(_DATA);
+            cursor.moveToFirst();
+            return cursor.getString(column_index);
+        } else {
+            return uri;
+        }
+        
     }
 }

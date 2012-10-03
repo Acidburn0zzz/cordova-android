@@ -29,6 +29,8 @@ import android.content.res.AssetManager;
 import android.content.res.Resources;
 import android.util.Log;
 
+import java.util.concurrent.ExecutorService;
+
 @Deprecated
 public class LegacyContext implements CordovaInterface {
     private static final String LOG_TAG = "Deprecation Notice";
@@ -63,13 +65,13 @@ public class LegacyContext implements CordovaInterface {
     }
 
     @Deprecated
-    public void setActivityResultCallback(IPlugin arg0) {
+    public void setActivityResultCallback(CordovaPlugin arg0) {
         Log.i(LOG_TAG, "Replace ctx.setActivityResultCallback() with cordova.setActivityResultCallback()");
         this.cordova.setActivityResultCallback(arg0);
     }
 
     @Deprecated
-    public void startActivityForResult(IPlugin arg0, Intent arg1, int arg2) {
+    public void startActivityForResult(CordovaPlugin arg0, Intent arg1, int arg2) {
         Log.i(LOG_TAG, "Replace ctx.startActivityForResult() with cordova.startActivityForResult()");
         this.cordova.startActivityForResult(arg0, arg1, arg2);
     }
@@ -144,5 +146,10 @@ public class LegacyContext implements CordovaInterface {
     public void unbindService(ServiceConnection conn) {
         Log.i(LOG_TAG, "Replace ctx.unbindService() with cordova.getActivity().unbindService()");
         this.cordova.getActivity().unbindService(conn);
+    }
+
+    public ExecutorService getThreadPool() {
+        Log.i(LOG_TAG, "Replace ctx.getThreadPool() with cordova.getThreadPool()");
+        return this.cordova.getThreadPool();
     }
 }

@@ -19,10 +19,12 @@
 package org.apache.cordova;
 
 import java.util.HashMap;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
-import org.apache.cordova.api.IPlugin;
-import org.apache.cordova.api.LOG;
 import org.apache.cordova.api.CordovaInterface;
+import org.apache.cordova.api.CordovaPlugin;
+import org.apache.cordova.api.LOG;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -142,6 +144,8 @@ public class DroidGap extends Activity implements CordovaInterface {
     protected LinearLayout root;
     protected boolean cancelLoadUrl = false;
     protected ProgressDialog spinnerDialog = null;
+    private final ExecutorService threadPool = Executors.newCachedThreadPool();
+
 
     // The initial URL for our app
     // ie http://server/path/index.html#abc?query
@@ -158,7 +162,7 @@ public class DroidGap extends Activity implements CordovaInterface {
     String baseUrl = null;
 
     // Plugin to call when activity result is received
-    protected IPlugin activityResultCallback = null;
+    protected CordovaPlugin activityResultCallback = null;
     protected boolean activityResultKeepRunning;
 
     // Default background color for activity
@@ -769,7 +773,7 @@ public class DroidGap extends Activity implements CordovaInterface {
      * @param intent            The intent to start
      * @param requestCode       The request code that is passed to callback to identify the activity
      */
-    public void startActivityForResult(IPlugin command, Intent intent, int requestCode) {
+    public void startActivityForResult(CordovaPlugin command, Intent intent, int requestCode) {
         this.activityResultCallback = command;
         this.activityResultKeepRunning = this.keepRunning;
 
@@ -794,13 +798,13 @@ public class DroidGap extends Activity implements CordovaInterface {
      */
     protected void onActivityResult(int requestCode, int resultCode, Intent intent) {
         super.onActivityResult(requestCode, resultCode, intent);
-        IPlugin callback = this.activityResultCallback;
+        CordovaPlugin callback = this.activityResultCallback;
         if (callback != null) {
             callback.onActivityResult(requestCode, resultCode, intent);
         }
     }
 
-    public void setActivityResultCallback(IPlugin plugin) {
+    public void setActivityResultCallback(CordovaPlugin plugin) {
         this.activityResultCallback = plugin;
     }
 
@@ -1050,5 +1054,9 @@ public class DroidGap extends Activity implements CordovaInterface {
             this.endActivity();
         }
         return null;
+    }
+
+    public ExecutorService getThreadPool() {
+        return threadPool;
     }
 }

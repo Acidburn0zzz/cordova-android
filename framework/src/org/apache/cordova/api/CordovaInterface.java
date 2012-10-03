@@ -22,6 +22,8 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 
+import java.util.concurrent.ExecutorService;
+
 /**
  * The Cordova activity abstract class that is extended by DroidGap.
  * It is used to isolate plugin development, and remove dependency on entire Cordova library.
@@ -36,15 +38,14 @@ public interface CordovaInterface {
      * @param intent      The intent to start
      * @param requestCode   The request code that is passed to callback to identify the activity
      */
-    abstract public void startActivityForResult(IPlugin command, Intent intent, int requestCode);
+    abstract public void startActivityForResult(CordovaPlugin command, Intent intent, int requestCode);
 
     /**
      * Set the plugin to be called when a sub-activity exits.
      *
      * @param plugin      The plugin on which onActivityResult is to be called
      */
-    abstract public void setActivityResultCallback(IPlugin plugin);
-
+    abstract public void setActivityResultCallback(CordovaPlugin plugin);
 
     /**
      * Get the Android activity.
@@ -67,5 +68,9 @@ public interface CordovaInterface {
      * @return              Object or null
      */
     public Object onMessage(String id, Object data);
-
+    
+    /**
+     * Returns a shared thread pool that can be used for background tasks.
+     */
+    public ExecutorService getThreadPool();
 }
