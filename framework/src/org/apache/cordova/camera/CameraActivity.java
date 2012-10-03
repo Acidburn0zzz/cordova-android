@@ -11,6 +11,8 @@ import org.apache.cordova.R;
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.hardware.Camera;
 import android.hardware.Camera.PictureCallback;
 import android.net.Uri;
@@ -22,6 +24,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.RelativeLayout;
 
 @SuppressLint("NewApi")
@@ -34,7 +38,15 @@ public class CameraActivity extends Activity {
     private boolean debounce = false;
     private ZoomListener mZoom;
     Slider zoomSlider;
-
+    
+    //Here are the two views
+    LinearLayout previewView;
+    RelativeLayout cameraView;
+    
+    //This is for saving
+    Bitmap previewImage;
+    Uri fileUri;
+    private byte[] image;
 
     class AFCallback implements Camera.AutoFocusCallback {
         public void onAutoFocus(boolean success, Camera camera)
@@ -85,7 +97,9 @@ public class CameraActivity extends Activity {
          * Do the initialization of the interface here
          */
         
-        setContentView(R.layout.camera);
+        setContentView(R.layout.capture);
+        previewView = (LinearLayout) findViewById(R.id.previewView);
+        previewView.setVisibility(View.INVISIBLE);
 
         // Create an instance of Camera
         Log.d(TAG, "get instance of camera");
@@ -144,6 +158,15 @@ public class CameraActivity extends Activity {
                     }
                }
             );
+            Button saveImage = (Button) findViewById(R.id.usePhoto);
+            saveImage.setOnClickListener(
+                    new View.OnClickListener() {
+                        
+                        public void onClick(View v) {
+                            saveAndExit();
+                        }
+                    }
+            );
         }
     }
 
@@ -179,24 +202,42 @@ public class CameraActivity extends Activity {
         public void onPictureTaken(byte[] data, Camera camera) {
             Log.d(TAG, "in onpicturetaken");
             
+            image = data;
+            //Create the new preview image
+            previewImage = BitmapFactory.decodeByteArray(image, 0, image.length);
+            
+            ImageView previewPane = (ImageView) findViewById(R.id.previewPane);
+            previewPane.setImageBitmap(previewImage);
+            cameraView = (RelativeLayout) findViewById(R.id.cameraView);
+            previewView.setVisibility(View.VISIBLE);
+            cameraView.setVisibility(View.INVISIBLE);
+            
             int rotation = that.getWindowManager().getDefaultDisplay().getRotation();
             Log.d(TAG, "Rotation is = " + rotation);
 
-            Uri fileUri = (Uri) getIntent().getExtras().get(MediaStore.EXTRA_OUTPUT);
-            Log.d(TAG, "using uri = " + fileUri.toString());
-            File pictureFile = new File(fileUri.getPath());
-
-            try {
-                FileOutputStream fos = new FileOutputStream(pictureFile);
-                fos.write(data);
-                fos.close();
-            } catch (FileNotFoundException e) {
-                Log.d(TAG, "File not found: " + e.getMessage());
-            } catch (IOException e) {
-                Log.d(TAG, "Error accessing file: " + e.getMessage());
-            }
-            setResult(RESULT_OK);
-            finish();
+            fileUri = (Uri) getIntent().getExtras().get(MediaStore.EXTRA_OUTPUT);
+            
         }
     };
+    
+    
+    private void saveAndExit()
+    {
+        File pictureFile = new File(fileUri.getPath());
+
+        try {
+            FileOutputStream fos = new FileOutputStream(pictureFile);
+            fos.write(image);
+            fos.close();
+        } catch (FileNotFoundException e) {
+            Log.d(TAG, "File not found: " + e.getMessage());
+        } catch (IOException e) {
+            Log.d(TAG, "Error accessing file: " + e.getMessage());
+        }
+        
+        // Recycle the image and send the result back
+        previewImage.recycle();
+        setResult(RESULT_OK);
+        finish();
+    }
 }
