@@ -27,5 +27,10 @@
             android:layout_width="50dip"
             android:layout_height="match_parent"
             android:layout_weight="10" />
+        <Button
+            android:id="@+id/cancel"
+            android:layout_width="50dip"
+            android:layout_height="match_parent"
+            android:layout_weight="10" />
     </LinearLayout>
 </LinearLayout>
