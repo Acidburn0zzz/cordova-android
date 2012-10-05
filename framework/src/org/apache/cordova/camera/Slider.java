@@ -118,8 +118,8 @@ public class Slider extends View {
 		mPosition = 0;
 		mVertical = vertical;
 		Resources res = context.getResources();		
-		mBackground = res.getDrawable(R.drawable.scrubber_horizontal_holo_dark);		
-		mIndicator = res.getDrawable(R.drawable.scrubber_control_holo_dark);
+		mBackground = res.getDrawable(R.drawable.slider_base);		
+		mIndicator = res.getDrawable(R.drawable.slider_thumb);
 		this.setOnTouchListener(mClickListener);
 	}
 

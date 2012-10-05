@@ -40,7 +40,7 @@ public class CameraActivity extends Activity {
     Slider zoomSlider;
     
     //Here are the two views
-    LinearLayout previewView;
+    RelativeLayout previewView;
     RelativeLayout cameraView;
     
     //This is for saving
@@ -98,7 +98,7 @@ public class CameraActivity extends Activity {
          */
         
         setContentView(R.layout.capture);
-        previewView = (LinearLayout) findViewById(R.id.previewView);
+        previewView = (RelativeLayout) findViewById(R.id.previewView);
         previewView.setVisibility(View.INVISIBLE);
 
         // Create an instance of Camera
@@ -121,10 +121,12 @@ public class CameraActivity extends Activity {
             preview.addView(mPreview);
             if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB_MR2)
                 preview.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE);
+            
+            
             // Add a listener to the Capture button
             Log.d(TAG, "setup button listener");
             Button captureButton = (Button) findViewById(R.id.button_capture);
-            captureButton.setBackgroundResource(R.drawable.take_pic);
+            captureButton.setBackgroundResource(R.drawable.bt_camera);
             captureButton.setOnClickListener(
                 new View.OnClickListener() {
     
@@ -143,6 +145,7 @@ public class CameraActivity extends Activity {
             zoomSlider.setPositionListener(mZoom);
             
             Button zoomOut = (Button) findViewById(R.id.zoom_out);
+            zoomOut.setBackgroundResource(R.drawable.bt_zoom_out);
             zoomOut.setOnClickListener(
                new View.OnClickListener() {
                     public void onClick(View v) {
@@ -151,6 +154,7 @@ public class CameraActivity extends Activity {
                }
             );
             Button zoomIn = (Button) findViewById(R.id.zoom_in);
+            zoomIn.setBackgroundResource(R.drawable.bt_zoom_in);
             zoomIn.setOnClickListener(
                new View.OnClickListener() {
                     public void onClick(View v) {
@@ -164,6 +168,30 @@ public class CameraActivity extends Activity {
                         
                         public void onClick(View v) {
                             saveAndExit();
+                        }
+                    }
+            );
+            Button redoImage = (Button) findViewById(R.id.redoPhoto);
+            redoImage.setOnClickListener(
+                    new View.OnClickListener() {
+                        
+                        public void onClick(View v) {
+                            previewView.setVisibility(View.INVISIBLE);
+                            cameraView.setVisibility(View.VISIBLE);
+                            debounce = false;
+                            mCamera.startPreview();
+                        }
+                    }
+            );
+            Button cancelImage = (Button) findViewById(R.id.cancel);
+            cancelImage.setOnClickListener(
+                    new View.OnClickListener() {
+                        
+                        public void onClick(View v) {
+                            if(previewImage != null)
+                                previewImage.recycle();
+                            setResult(RESULT_CANCELED);
+                            finish();
                         }
                     }
             );
