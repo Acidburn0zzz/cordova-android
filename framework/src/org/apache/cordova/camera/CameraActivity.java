@@ -188,8 +188,6 @@ public class CameraActivity extends Activity {
                     new View.OnClickListener() {
                         
                         public void onClick(View v) {
-                            if(previewImage != null)
-                                previewImage.recycle();
                             setResult(RESULT_CANCELED);
                             finish();
                         }
@@ -231,11 +229,6 @@ public class CameraActivity extends Activity {
             Log.d(TAG, "in onpicturetaken");
             
             image = data;
-            //Create the new preview image
-            previewImage = BitmapFactory.decodeByteArray(image, 0, image.length);
-            
-            ImageView previewPane = (ImageView) findViewById(R.id.previewPane);
-            previewPane.setImageBitmap(previewImage);
             cameraView = (RelativeLayout) findViewById(R.id.cameraView);
             previewView.setVisibility(View.VISIBLE);
             cameraView.setVisibility(View.INVISIBLE);
