@@ -25,8 +25,9 @@ import java.net.URLDecoder;
 import java.nio.channels.FileChannel;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.cordova.api.CallbackContext;
 import org.apache.cordova.api.CordovaInterface;
-import org.apache.cordova.api.Plugin;
+import org.apache.cordova.api.CordovaPlugin;
 import org.apache.cordova.api.PluginResult;
 import org.apache.cordova.file.EncodingException;
 import org.apache.cordova.file.FileExistsException;
@@ -42,6 +43,7 @@ import android.database.Cursor;
 import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
+import android.util.Log;
 import android.webkit.MimeTypeMap;
 
 //import android.app.Activity;
@@ -50,7 +52,7 @@ import android.webkit.MimeTypeMap;
  * This class provides SD card file and directory services to JavaScript.
  * Only files on the SD card can be accessed.
  */
-public class FileUtils extends Plugin {
+public class FileUtils extends CordovaPlugin {
     @SuppressWarnings("unused")
     private static final String LOG_TAG = "FileUtils";
     private static final String _DATA = "_data";    // The column name where the file path is stored
@@ -84,83 +86,78 @@ public class FileUtils extends Plugin {
     }
 
     /**
-     * Executes the request and returns PluginResult.
+     * Executes the request and returns whether the action was valid.
      *
      * @param action 		The action to execute.
-     * @param args 			JSONArry of arguments for the plugin.
-     * @param callbackId	The callback id used when calling back into JavaScript.
-     * @return 				A PluginResult object with a status and message.
+     * @param args 		JSONArry of arguments for the plugin.
+     * @param callbackContext	The callback context used when calling back into JavaScript.
+     * @return 			True if the action was valid, false otherwise.
      */
-    public PluginResult execute(String action, JSONArray args, String callbackId) {
-        PluginResult.Status status = PluginResult.Status.OK;
-        String result = "";
-        //System.out.println("FileUtils.execute("+action+")");
-
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
         try {
             if (action.equals("testSaveLocationExists")) {
                 boolean b = DirectoryManager.testSaveLocationExists();
-                return new PluginResult(status, b);
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, b));
             }
             else if (action.equals("getFreeDiskSpace")) {
                 long l = DirectoryManager.getFreeDiskSpace(false);
-                return new PluginResult(status, l);
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, l));
             }
             else if (action.equals("testFileExists")) {
                 boolean b = DirectoryManager.testFileExists(args.getString(0));
-                return new PluginResult(status, b);
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, b));
             }
             else if (action.equals("testDirectoryExists")) {
                 boolean b = DirectoryManager.testFileExists(args.getString(0));
-                return new PluginResult(status, b);
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, b));
             }
             else if (action.equals("readAsText")) {
                 String s = this.readAsText(args.getString(0), args.getString(1));
-                return new PluginResult(status, s);
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, s));
             }
             else if (action.equals("readAsDataURL")) {
                 String s = this.readAsDataURL(args.getString(0));
-                return new PluginResult(status, s);
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, s));
             }
             else if (action.equals("write")) {
                 long fileSize = this.write(args.getString(0), args.getString(1), args.getInt(2));
-                return new PluginResult(status, fileSize);
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, fileSize));
             }
             else if (action.equals("truncate")) {
                 long fileSize = this.truncateFile(args.getString(0), args.getLong(1));
-                return new PluginResult(status, fileSize);
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, fileSize));
             }
             else if (action.equals("requestFileSystem")) {
                 long size = args.optLong(1);
-                if (size != 0) {
-                    if (size > (DirectoryManager.getFreeDiskSpace(true) * 1024)) {
-                        return new PluginResult(PluginResult.Status.ERROR, FileUtils.QUOTA_EXCEEDED_ERR);
-                    }
+                if (size != 0 && size > (DirectoryManager.getFreeDiskSpace(true) * 1024)) {
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.ERROR, FileUtils.QUOTA_EXCEEDED_ERR));
+                } else {
+                    JSONObject obj = requestFileSystem(args.getInt(0));
+                    callbackContext.success(obj);
                 }
-                JSONObject obj = requestFileSystem(args.getInt(0));
-                return new PluginResult(status, obj);
             }
             else if (action.equals("resolveLocalFileSystemURI")) {
                 JSONObject obj = resolveLocalFileSystemURI(args.getString(0));
-                return new PluginResult(status, obj);
+                callbackContext.success(obj);
             }
             else if (action.equals("getMetadata")) {
-                return new PluginResult(status, getMetadata(args.getString(0)));
+                callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, getMetadata(args.getString(0))));
             }
             else if (action.equals("getFileMetadata")) {
                 JSONObject obj = getFileMetadata(args.getString(0));
-                return new PluginResult(status, obj);
+                callbackContext.success(obj);
             }
             else if (action.equals("getParent")) {
                 JSONObject obj = getParent(args.getString(0));
-                return new PluginResult(status, obj);
+                callbackContext.success(obj);
             }
             else if (action.equals("getDirectory")) {
                 JSONObject obj = getFile(args.getString(0), args.getString(1), args.optJSONObject(2), true);
-                return new PluginResult(status, obj);
+                callbackContext.success(obj);
             }
             else if (action.equals("getFile")) {
                 JSONObject obj = getFile(args.getString(0), args.getString(1), args.optJSONObject(2), false);
-                return new PluginResult(status, obj);
+                callbackContext.success(obj);
             }
             else if (action.equals("remove")) {
                 boolean success;
@@ -169,51 +166,52 @@ public class FileUtils extends Plugin {
 
                 if (success) {
                     notifyDelete(args.getString(0));
-                    return new PluginResult(status);
+                    callbackContext.success();
                 } else {
-                    return new PluginResult(PluginResult.Status.ERROR, FileUtils.NO_MODIFICATION_ALLOWED_ERR);
+                    callbackContext.error(FileUtils.NO_MODIFICATION_ALLOWED_ERR);
                 }
             }
             else if (action.equals("removeRecursively")) {
                 boolean success = removeRecursively(args.getString(0));
                 if (success) {
-                    return new PluginResult(status);
+                    callbackContext.success();
                 } else {
-                    return new PluginResult(PluginResult.Status.ERROR, FileUtils.NO_MODIFICATION_ALLOWED_ERR);
+                    callbackContext.error(FileUtils.NO_MODIFICATION_ALLOWED_ERR);
                 }
             }
             else if (action.equals("moveTo")) {
                 JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), true);
-                return new PluginResult(status, entry);
+                callbackContext.success(entry);
             }
             else if (action.equals("copyTo")) {
                 JSONObject entry = transferTo(args.getString(0), args.getString(1), args.getString(2), false);
-                return new PluginResult(status, entry);
+                callbackContext.success(entry);
             }
             else if (action.equals("readEntries")) {
                 JSONArray entries = readEntries(args.getString(0));
-                return new PluginResult(status, entries);
+                callbackContext.success(entries);
             }
-            return new PluginResult(status, result);
+            else {
+                return false;
+            }
         } catch (FileNotFoundException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.NOT_FOUND_ERR);
+            callbackContext.error(FileUtils.NOT_FOUND_ERR);
         } catch (FileExistsException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.PATH_EXISTS_ERR);
+            callbackContext.error(FileUtils.PATH_EXISTS_ERR);
         } catch (NoModificationAllowedException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.NO_MODIFICATION_ALLOWED_ERR);
-        } catch (JSONException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.NO_MODIFICATION_ALLOWED_ERR);
+            callbackContext.error(FileUtils.NO_MODIFICATION_ALLOWED_ERR);
         } catch (InvalidModificationException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.INVALID_MODIFICATION_ERR);
+            callbackContext.error(FileUtils.INVALID_MODIFICATION_ERR);
         } catch (MalformedURLException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.ENCODING_ERR);
+            callbackContext.error(FileUtils.ENCODING_ERR);
         } catch (IOException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.INVALID_MODIFICATION_ERR);
+            callbackContext.error(FileUtils.INVALID_MODIFICATION_ERR);
         } catch (EncodingException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.ENCODING_ERR);
+            callbackContext.error(FileUtils.ENCODING_ERR);
         } catch (TypeMismatchException e) {
-            return new PluginResult(PluginResult.Status.ERROR, FileUtils.TYPE_MISMATCH_ERR);
+            callbackContext.error(FileUtils.TYPE_MISMATCH_ERR);
         }
+        return true;
     }
 
     /**
@@ -223,7 +221,7 @@ public class FileUtils extends Plugin {
      */
     private void notifyDelete(String filePath) {
         String newFilePath = stripFileProtocol(filePath);
-        int result = this.cordova.getActivity().getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
+        this.cordova.getActivity().getContentResolver().delete(MediaStore.Images.Media.EXTERNAL_CONTENT_URI,
             MediaStore.Images.Media.DATA + " = ?",
             new String[] { newFilePath });
     }
@@ -320,8 +318,9 @@ public class FileUtils extends Plugin {
      * @throws InvalidModificationException
      * @throws EncodingException
      * @throws JSONException
+     * @throws FileExistsException 
      */
-    private JSONObject transferTo(String fileName, String newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException {
+    private JSONObject transferTo(String fileName, String newParent, String newName, boolean move) throws JSONException, NoModificationAllowedException, IOException, InvalidModificationException, EncodingException, FileExistsException {
         fileName = stripFileProtocol(fileName);
         newParent = stripFileProtocol(newParent);
 
@@ -409,6 +408,16 @@ public class FileUtils extends Plugin {
             throw new InvalidModificationException("Can't rename a file to a directory");
         }
 
+        copyAction(srcFile, destFile);
+
+        return getEntry(destFile);
+    }
+
+    /**
+     * Moved this code into it's own method so moveTo could use it when the move is across file systems
+     */
+    private void copyAction(File srcFile, File destFile)
+            throws FileNotFoundException, IOException {
         FileInputStream istream = new FileInputStream(srcFile);
         FileOutputStream ostream = new FileOutputStream(destFile);
         FileChannel input = istream.getChannel();
@@ -422,8 +431,6 @@ public class FileUtils extends Plugin {
             input.close();
             output.close();
         }
-
-        return getEntry(destFile);
     }
 
     /**
@@ -498,7 +505,7 @@ public class FileUtils extends Plugin {
      * @throws InvalidModificationException
      * @throws JSONException
      */
-    private JSONObject moveFile(File srcFile, File destFile) throws JSONException, InvalidModificationException {
+    private JSONObject moveFile(File srcFile, File destFile) throws IOException, JSONException, InvalidModificationException {
         // Renaming a file to an existing directory should fail
         if (destFile.exists() && destFile.isDirectory()) {
             throw new InvalidModificationException("Can't rename a file to a directory");
@@ -510,6 +517,12 @@ public class FileUtils extends Plugin {
             // Now we have to do things the hard way
             // 1) Copy all the old file
             // 2) delete the src file
+            copyAction(srcFile, destFile);
+            if (destFile.exists()) {
+                srcFile.delete();
+            } else {
+                throw new IOException("moved failed");
+            }
         }
 
         return getEntry(destFile);
@@ -524,8 +537,10 @@ public class FileUtils extends Plugin {
      * @throws JSONException
      * @throws IOException
      * @throws InvalidModificationException
+     * @throws NoModificationAllowedException 
+     * @throws FileExistsException 
      */
-    private JSONObject moveDirectory(File srcDir, File destinationDir) throws JSONException, InvalidModificationException {
+    private JSONObject moveDirectory(File srcDir, File destinationDir) throws IOException, JSONException, InvalidModificationException, NoModificationAllowedException, FileExistsException {
         // Renaming a file to an existing directory should fail
         if (destinationDir.exists() && destinationDir.isFile()) {
             throw new InvalidModificationException("Can't rename a file to a directory");
@@ -549,6 +564,12 @@ public class FileUtils extends Plugin {
             // Now we have to do things the hard way
             // 1) Copy all the old files
             // 2) delete the src directory
+            copyDirectory(srcDir, destinationDir);
+            if (destinationDir.exists()) {
+                removeDirRecursively(srcDir);
+            } else {
+                throw new IOException("moved failed");
+            }
         }
 
         return getEntry(destinationDir);

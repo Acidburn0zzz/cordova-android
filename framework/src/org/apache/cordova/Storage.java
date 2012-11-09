@@ -20,7 +20,8 @@ package org.apache.cordova;
 
 import java.io.File;
 
-import org.apache.cordova.api.Plugin;
+import org.apache.cordova.api.CallbackContext;
+import org.apache.cordova.api.CordovaPlugin;
 import org.apache.cordova.api.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -35,7 +36,7 @@ import android.database.sqlite.*;
  * Android 3.0 devices. It is not used for other versions of Android, since
  * HTML5 database is built in to the browser.
  */
-public class Storage extends Plugin {
+public class Storage extends CordovaPlugin {
 
     // Data Definition Language
     private static final String ALTER = "alter";
@@ -60,47 +61,32 @@ public class Storage extends Plugin {
      *            The action to execute.
      * @param args
      *            JSONArry of arguments for the plugin.
-     * @param callbackId
-     *            The callback id used when calling back into JavaScript.
-     * @return A PluginResult object with a status and message.
+     * @param callbackContext
+     *            The callback context used when calling back into JavaScript.
+     * @return True if the action was valid, false otherwise.
      */
-    public PluginResult execute(String action, JSONArray args, String callbackId) {
-        PluginResult.Status status = PluginResult.Status.OK;
-        String result = "";
-
-        try {
-            if (action.equals("openDatabase")) {
-                this.openDatabase(args.getString(0), args.getString(1),
-                        args.getString(2), args.getLong(3));
-            } else if (action.equals("executeSql")) {
-                String[] s = null;
-                if (args.isNull(1)) {
-                    s = new String[0];
-                } else {
-                    JSONArray a = args.getJSONArray(1);
-                    int len = a.length();
-                    s = new String[len];
-                    for (int i = 0; i < len; i++) {
-                        s[i] = a.getString(i);
-                    }
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        if (action.equals("openDatabase")) {
+            this.openDatabase(args.getString(0), args.getString(1),
+                    args.getString(2), args.getLong(3));
+        } else if (action.equals("executeSql")) {
+            String[] s = null;
+            if (args.isNull(1)) {
+                s = new String[0];
+            } else {
+                JSONArray a = args.getJSONArray(1);
+                int len = a.length();
+                s = new String[len];
+                for (int i = 0; i < len; i++) {
+                    s[i] = a.getString(i);
                 }
-                this.executeSql(args.getString(0), s, args.getString(2));
             }
-            return new PluginResult(status, result);
-        } catch (JSONException e) {
-            return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
+            this.executeSql(args.getString(0), s, args.getString(2));
         }
-    }
-
-    /**
-     * Identifies if action to be executed returns a value and should be run
-     * synchronously.
-     *
-     * @param action
-     *            The action to execute
-     * @return T=returns value
-     */
-    public boolean isSynch(String action) {
+        else {
+            return false;
+        }
+        callbackContext.success();
         return true;
     }
 
@@ -151,7 +137,20 @@ public class Storage extends Plugin {
             this.path = this.cordova.getActivity().getApplicationContext().getDir("database", Context.MODE_PRIVATE).getPath();
         }
 
-        this.dbName = this.path + File.pathSeparator + db + ".db";
+        this.dbName = this.path + File.separator + db + ".db";
+
+        /*
+         * What is all this nonsense? Well the separator was incorrect so the db was showing up in the wrong 
+         * directory. This bit of code fixes that issue and moves the db to the correct directory.
+         */
+        File oldDbFile = new File(this.path + File.pathSeparator + db + ".db");
+        if (oldDbFile.exists()) {
+            File dbPath = new File(this.path);
+            File dbFile = new File(dbName);
+            dbPath.mkdirs();
+            oldDbFile.renameTo(dbFile);
+        }
+        
         this.myDb = SQLiteDatabase.openOrCreateDatabase(this.dbName, null);
     }
 
@@ -169,7 +168,7 @@ public class Storage extends Plugin {
         try {
             if (isDDL(query)) {
                 this.myDb.execSQL(query);
-                this.sendJavascript("cordova.require('cordova/plugin/android/storage').completeQuery('" + tx_id + "', '');");
+                this.webView.sendJavascript("cordova.require('cordova/plugin/android/storage').completeQuery('" + tx_id + "', '');");
             }
             else {
                 Cursor myCursor = this.myDb.rawQuery(query, params);
@@ -182,7 +181,7 @@ public class Storage extends Plugin {
             System.out.println("Storage.executeSql(): Error=" +  ex.getMessage());
 
             // Send error message back to JavaScript
-            this.sendJavascript("cordova.require('cordova/plugin/android/storage').failQuery('" + ex.getMessage() + "','" + tx_id + "');");
+            this.webView.sendJavascript("cordova.require('cordova/plugin/android/storage').failQuery('" + ex.getMessage() + "','" + tx_id + "');");
         }
     }
 
@@ -240,7 +239,7 @@ public class Storage extends Plugin {
         }
 
         // Let JavaScript know that there are no more rows
-        this.sendJavascript("cordova.require('cordova/plugin/android/storage').completeQuery('" + tx_id + "', " + result + ");");
+        this.webView.sendJavascript("cordova.require('cordova/plugin/android/storage').completeQuery('" + tx_id + "', " + result + ");");
     }
 
 }

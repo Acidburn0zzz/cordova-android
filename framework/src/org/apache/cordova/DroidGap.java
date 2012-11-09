@@ -301,7 +301,16 @@ public class DroidGap extends Activity implements CordovaInterface {
      */
     public void init() {
         CordovaWebView webView = new CordovaWebView(DroidGap.this);
-        this.init(webView, new CordovaWebViewClient(this, webView), new CordovaChromeClient(this, webView));
+        CordovaWebViewClient webViewClient;
+        if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB)
+        {
+            webViewClient = new CordovaWebViewClient(this, webView);
+        }
+        else
+        {
+            webViewClient = new IceCreamCordovaWebViewClient(this, webView);
+        }
+        this.init(webView, webViewClient, new CordovaChromeClient(this, webView));
     }
 
     /**
@@ -909,7 +918,7 @@ public class DroidGap extends Activity implements CordovaInterface {
     @Override
     public boolean onPrepareOptionsMenu(Menu menu) {
         this.postMessage("onPrepareOptionsMenu", menu);
-        return super.onPrepareOptionsMenu(menu);
+        return true;
     }
 
     @Override
@@ -1006,14 +1015,37 @@ public class DroidGap extends Activity implements CordovaInterface {
     public boolean onKeyUp(int keyCode, KeyEvent event)
     {
     	//Determine if the focus is on the current view or not
-    	if (appView.getHitTestResult() != null && 
-    	    appView.getHitTestResult().getType() == WebView.HitTestResult.EDIT_TEXT_TYPE &&
-    	    keyCode == KeyEvent.KEYCODE_BACK) {
-    	    		return appView.onKeyUp(keyCode, event);
+        if (appView.getHitTestResult() != null && 
+                appView.getHitTestResult().getType() == WebView.HitTestResult.EDIT_TEXT_TYPE &&
+                (keyCode == KeyEvent.KEYCODE_BACK || keyCode == KeyEvent.KEYCODE_MENU)) {
+                        return appView.onKeyUp(keyCode, event);
+        } else if (appView.isCustomViewShowing() && keyCode == KeyEvent.KEYCODE_BACK) {
+            return appView.onKeyUp(keyCode, event);
+        } else {
+            return super.onKeyUp(keyCode, event);
     	}
-    	else
-    		return super.onKeyUp(keyCode, event);
     }
+    
+    /*
+     * Android 2.x needs to be able to check where the cursor is.  Android 4.x does not
+     * 
+     * (non-Javadoc)
+     * @see android.app.Activity#onKeyDown(int, android.view.KeyEvent)
+     */
+    
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)
+    {
+        //Determine if the focus is on the current view or not
+        if (appView.getHitTestResult() != null && 
+            appView.getHitTestResult().getType() == WebView.HitTestResult.EDIT_TEXT_TYPE &&
+            keyCode == KeyEvent.KEYCODE_BACK) {
+                    return appView.onKeyDown(keyCode, event);
+        }
+        else
+            return super.onKeyDown(keyCode, event);
+    }
+    
     
     /**
      * Called when a message is sent to plugin.

@@ -17,11 +17,17 @@
        under the License.
 */
 
-package org.apache.cordova.test;
+package org.apache.cordova.test.actions;
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 import org.apache.cordova.CordovaWebView;
 import org.apache.cordova.api.CordovaInterface;
-import org.apache.cordova.api.IPlugin;
+import org.apache.cordova.api.CordovaPlugin;
+import org.apache.cordova.test.R;
+import org.apache.cordova.test.R.id;
+import org.apache.cordova.test.R.layout;
 
 import android.app.Activity;
 import android.content.Context;
@@ -29,9 +35,10 @@ import android.content.Intent;
 import android.os.Bundle;
 
 public class CordovaWebViewTestActivity extends Activity implements CordovaInterface {
-
     CordovaWebView cordovaWebView;
 
+    private final ExecutorService threadPool = Executors.newCachedThreadPool();
+    
     /** Called when the activity is first created. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -53,33 +60,30 @@ public class CordovaWebViewTestActivity extends Activity implements CordovaInter
         }
     }
 
-    public void startActivityForResult(IPlugin command, Intent intent, int requestCode) {
-        // TODO Auto-generated method stub
-
+    public Context getContext() {
+        return this;
     }
 
-    public void setActivityResultCallback(IPlugin plugin) {
+    public void startActivityForResult(CordovaPlugin command, Intent intent,
+            int requestCode) {
         // TODO Auto-generated method stub
-
+        
     }
 
-    public void bindBackButton(boolean override) {
+    public void setActivityResultCallback(CordovaPlugin plugin) {
         // TODO Auto-generated method stub
-
+        
     }
 
-    public boolean isBackButtonBound() {
-        // TODO Auto-generated method stub
-        return false;
-    }
-
+    //Note: This must always return an activity!
     public Activity getActivity() {
         return this;
     }
 
+    @Deprecated
     public void cancelLoadUrl() {
         // TODO Auto-generated method stub
-
+        
     }
 
     public Object onMessage(String id, Object data) {
@@ -87,7 +91,8 @@ public class CordovaWebViewTestActivity extends Activity implements CordovaInter
         return null;
     }
 
-    public Context getContext() {
-        return this;
+    public ExecutorService getThreadPool() {
+        // TODO Auto-generated method stub
+        return threadPool;
     }
 }

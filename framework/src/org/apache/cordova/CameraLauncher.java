@@ -13,8 +13,9 @@ import org.apache.cordova.DirectoryManager;
 import org.apache.cordova.ExifHelper;
 import org.apache.cordova.FileUtils;
 import org.apache.cordova.api.CordovaInterface;
+import org.apache.cordova.api.CallbackContext;
+import org.apache.cordova.api.CordovaPlugin;
 import org.apache.cordova.api.LOG;
-import org.apache.cordova.api.Plugin;
 import org.apache.cordova.api.PluginResult;
 import org.apache.cordova.camera.CameraActivity;
 import org.json.JSONArray;
@@ -43,7 +44,7 @@ import android.util.Log;
  * and returns the captured image.  When the camera view is closed, the screen displayed before 
  * the camera view was shown is redisplayed.
  */
-public class CameraLauncher extends Plugin implements MediaScannerConnectionClient {
+public class CameraLauncher extends CordovaPlugin implements MediaScannerConnectionClient {
 
     private static final int DATA_URL = 0;              // Return base64 encoded string
     private static final int FILE_URI = 1;              // Return file uri (content://media/external/images/media/2 for Android)
@@ -72,9 +73,9 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
     private int mediaType;                  // What type of media to retrieve
     private boolean saveToPhotoAlbum;       // Should the picture be saved to the device's photo album
     private boolean correctOrientation;     // Should the pictures orientation be corrected
-    private boolean allowEdit;              // Should we allow the user to crop the image
+    //private boolean allowEdit;              // Should we allow the user to crop the image. UNUSED.
 
-    public String callbackId;
+    public CallbackContext callbackContext;
     private int numPics;
 
     private MediaScannerConnection conn;    // Used to update gallery app with newly-written files
@@ -92,63 +93,57 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
 
     /**
      * Executes the request and returns PluginResult.
-     * 
-     * @param action        The action to execute.
-     * @param args          JSONArry of arguments for the plugin.
-     * @param callbackId    The callback id used when calling back into JavaScript.
-     * @return              A PluginResult object with a status and message.
+     *
+     * @param action        	The action to execute.
+     * @param args          	JSONArry of arguments for the plugin.
+     * @param callbackContext   The callback id used when calling back into JavaScript.
+     * @return              	A PluginResult object with a status and message.
      */
-    public PluginResult execute(String action, JSONArray args, String callbackId) {
-        PluginResult.Status status = PluginResult.Status.OK;
-        String result = "";
-        this.callbackId = callbackId;
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        this.callbackContext = callbackContext;
 
-        try {
-            if (action.equals("takePicture")) {
-                int srcType = CAMERA;
-                int destType = FILE_URI;
-                this.saveToPhotoAlbum = false;
-                this.targetHeight = 0;
-                this.targetWidth = 0;
-                this.encodingType = JPEG;
-                this.mediaType = PICTURE;
-                this.mQuality = 80;
+        if (action.equals("takePicture")) {
+            int srcType = CAMERA;
+            int destType = FILE_URI;
+            this.saveToPhotoAlbum = false;
+            this.targetHeight = 0;
+            this.targetWidth = 0;
+            this.encodingType = JPEG;
+            this.mediaType = PICTURE;
+            this.mQuality = 80;
 
-                this.mQuality = args.getInt(0);
-                destType = args.getInt(1);
-                srcType = args.getInt(2);
-                this.targetWidth = args.getInt(3);
-                this.targetHeight = args.getInt(4);
-                this.encodingType = args.getInt(5);
-                this.mediaType = args.getInt(6);
-                this.allowEdit = args.getBoolean(7);
-                this.correctOrientation = args.getBoolean(8);
-                this.saveToPhotoAlbum = args.getBoolean(9);
+            this.mQuality = args.getInt(0);
+            destType = args.getInt(1);
+            srcType = args.getInt(2);
+            this.targetWidth = args.getInt(3);
+            this.targetHeight = args.getInt(4);
+            this.encodingType = args.getInt(5);
+            this.mediaType = args.getInt(6);
+            //this.allowEdit = args.getBoolean(7); // This field is unused.
+            this.correctOrientation = args.getBoolean(8);
+            this.saveToPhotoAlbum = args.getBoolean(9);
 
-                // If the user specifies a 0 or smaller width/height
-                // make it -1 so later comparisons succeed
-                if (this.targetWidth < 1) {
-                    this.targetWidth = -1;
-                }
-                if (this.targetHeight < 1) {
-                    this.targetHeight = -1;
-                }
-
-                if (srcType == CAMERA) {
-                    this.takePicture(destType, encodingType);
-                }
-                else if ((srcType == PHOTOLIBRARY) || (srcType == SAVEDPHOTOALBUM)) {
-                    this.getImage(srcType, destType);
-                }
-                PluginResult r = new PluginResult(PluginResult.Status.NO_RESULT);
-                r.setKeepCallback(true);
-                return r;
+            // If the user specifies a 0 or smaller width/height
+            // make it -1 so later comparisons succeed
+            if (this.targetWidth < 1) {
+                this.targetWidth = -1;
             }
-            return new PluginResult(status, result);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
+            if (this.targetHeight < 1) {
+                this.targetHeight = -1;
+            }
+
+            if (srcType == CAMERA) {
+                this.takePicture(destType, encodingType);
+            }
+            else if ((srcType == PHOTOLIBRARY) || (srcType == SAVEDPHOTOALBUM)) {
+                this.getImage(srcType, destType);
+            }
+            PluginResult r = new PluginResult(PluginResult.Status.NO_RESULT);
+            r.setKeepCallback(true);
+            callbackContext.sendPluginResult(r);
+            return true;
         }
+        return false;
     }
     
     //--------------------------------------------------------------------------
@@ -178,8 +173,12 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
         Log.d(LOG_TAG, "Using URI = " + this.imageUri.toString());
         intent.putExtra(MediaStore.EXTRA_OUTPUT, this.imageUri);
                 
-        Log.d(LOG_TAG, "calling start activity");
-        this.cordova.startActivityForResult((Plugin) this, intent, (CAMERA + 1) * 16 + returnType + 1);      
+
+        if (this.cordova != null) {
+            this.cordova.startActivityForResult((CordovaPlugin) this, intent, (CAMERA + 1) * 16 + returnType + 1);
+        }
+//        else
+//            LOG.d(LOG_TAG, "ERROR: You must use the CordovaInterface for this to work correctly. Please implement it in your activity");
     }
     
     /**
@@ -210,7 +209,7 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
         intent.setAction(Intent.ACTION_GET_CONTENT);
         intent.addCategory(Intent.CATEGORY_OPENABLE);
         if (this.cordova != null) {
-            this.cordova.startActivityForResult((Plugin) this, Intent.createChooser(intent,
+            this.cordova.startActivityForResult((CordovaPlugin) this, Intent.createChooser(intent,
                     new String(title)), (srcType + 1) * 16 + returnType + 1);
         }
     }
@@ -300,7 +299,7 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
                             Log.d(LOG_TAG, "change nothing and return file");
                             writeUncompressedImage(uri);
 
-                            this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                            this.callbackContext.success(uri.toString());
                         } else {
                             Log.d(LOG_TAG, "loading into bitmap");
                             bitmap = getScaledBitmap(FileUtils.stripFileProtocol(imageUri.toString()));
@@ -331,7 +330,7 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
 
                         }
                         // Send Uri back to JavaScript for viewing image
-                        this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                        this.callbackContext.success(uri.toString());
                     }
 
                     this.cleanup(FILE_URI, this.imageUri, uri, bitmap);
@@ -359,14 +358,14 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
                 // If you ask for video or all media type you will automatically get back a file URI
                 // and there will be no attempt to resize any returned data
                 if (this.mediaType != PICTURE) {
-                    this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                    this.callbackContext.success(uri.toString());
                 }
                 else {
                     // This is a special case to just return the path as no scaling,
                     // rotating or compression needs to be done
                     if (this.targetHeight == -1 && this.targetWidth == -1 &&
                             this.mQuality == 100 && destType == FILE_URI && !this.correctOrientation) {
-                        this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                        this.callbackContext.success(uri.toString());
                     } else {
                         // Get the path to the image. Makes loading so much easier.
                         String imagePath = FileUtils.getRealPathFromURI(uri, this.cordova);
@@ -438,14 +437,14 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
 
                                     // The resized image is cached by the app in order to get around this and not have to delete you
                                     // application cache I'm adding the current system time to the end of the file url.
-                                    this.success(new PluginResult(PluginResult.Status.OK, ("file://" + resizePath + "?" + System.currentTimeMillis())), this.callbackId);
+                                    this.callbackContext.success("file://" + resizePath + "?" + System.currentTimeMillis());
                                 } catch (Exception e) {
                                     e.printStackTrace();
                                     this.failPicture("Error retrieving image.");
                                 }
                             }
                             else {
-                                this.success(new PluginResult(PluginResult.Status.OK, uri.toString()), this.callbackId);
+                                this.callbackContext.success(uri.toString());
                             }
                         }
                         if (bitmap != null) {
@@ -845,12 +844,35 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
     }
 
     /**
+     * Compress bitmap using jpeg, convert to Base64 encoded string, and return to JavaScript.
+     *
+     * @param bitmap
+     */
+    public void processPicture(Bitmap bitmap) {
+        ByteArrayOutputStream jpeg_data = new ByteArrayOutputStream();
+        try {
+            if (bitmap.compress(CompressFormat.JPEG, mQuality, jpeg_data)) {
+                byte[] code = jpeg_data.toByteArray();
+                byte[] output = Base64.encodeBase64(code);
+                String js_out = new String(output);
+                this.callbackContext.success(js_out);
+                js_out = null;
+                output = null;
+                code = null;
+            }
+        } catch (Exception e) {
+            this.failPicture("Error compressing image.");
+        }
+        jpeg_data = null;
+    }
+
+    /**
      * Send error message to JavaScript.
      *
      * @param err
      */
     public void failPicture(String err) {
-        this.error(new PluginResult(PluginResult.Status.ERROR, err), this.callbackId);
+        this.callbackContext.error(err);
     }
 
     private void scanForGallery(Uri newImage) {
@@ -858,7 +880,7 @@ public class CameraLauncher extends Plugin implements MediaScannerConnectionClie
         if(this.conn != null) {
             this.conn.disconnect();
         }
-        this.conn = new MediaScannerConnection(this.ctx.getActivity().getApplicationContext(), this);
+        this.conn = new MediaScannerConnection(this.cordova.getActivity().getApplicationContext(), this);
         conn.connect();
     }
 

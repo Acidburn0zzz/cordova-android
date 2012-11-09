@@ -20,8 +20,9 @@ package org.apache.cordova;
 
 import java.util.List;
 
+import org.apache.cordova.api.CallbackContext;
 import org.apache.cordova.api.CordovaInterface;
-import org.apache.cordova.api.Plugin;
+import org.apache.cordova.api.CordovaPlugin;
 import org.apache.cordova.api.PluginResult;
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -33,12 +34,13 @@ import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.content.Context;
 
-import android.util.Log;
+import android.os.Handler;
+import android.os.Looper;
 
 /**
  * This class listens to the compass sensor and stores the latest heading value.
  */
-public class CompassListener extends Plugin implements SensorEventListener {
+public class CompassListener extends CordovaPlugin implements SensorEventListener {
 
     public static int STOPPED = 0;
     public static int STARTING = 1;
@@ -56,6 +58,8 @@ public class CompassListener extends Plugin implements SensorEventListener {
     private SensorManager sensorManager;// Sensor manager
     Sensor mSensor;                     // Compass sensor returned by sensor manager
 
+    private CallbackContext callbackContext;
+
     /**
      * Constructor.
      */
@@ -70,95 +74,62 @@ public class CompassListener extends Plugin implements SensorEventListener {
      * get file paths associated with the Activity.
      *
      * @param cordova The context of the main Activity.
+     * @param webView The CordovaWebView Cordova is running in.
      */
-    public void setContext(CordovaInterface cordova) {
-        super.setContext(cordova);
+    public void initialize(CordovaInterface cordova, CordovaWebView webView) {
+        super.initialize(cordova, webView);
         this.sensorManager = (SensorManager) cordova.getActivity().getSystemService(Context.SENSOR_SERVICE);
     }
 
     /**
      * Executes the request and returns PluginResult.
      *
-     * @param action        The action to execute.
-     * @param args          JSONArry of arguments for the plugin.
-     * @param callbackId    The callback id used when calling back into JavaScript.
-     * @return              A PluginResult object with a status and message.
+     * @param action                The action to execute.
+     * @param args          	    JSONArry of arguments for the plugin.
+     * @param callbackS=Context     The callback id used when calling back into JavaScript.
+     * @return              	    True if the action was valid.
+     * @throws JSONException 
      */
-    public PluginResult execute(String action, JSONArray args, String callbackId) {
-        PluginResult.Status status = PluginResult.Status.OK;
-        String result = "";
-
-        try {
-            if (action.equals("start")) {
-                this.start();
-            }
-            else if (action.equals("stop")) {
-                this.stop();
-            }
-            else if (action.equals("getStatus")) {
-                int i = this.getStatus();
-                return new PluginResult(status, i);
-            }
-            else if (action.equals("getHeading")) {
-                // If not running, then this is an async call, so don't worry about waiting
-                if (this.status != CompassListener.RUNNING) {
-                    int r = this.start();
-                    if (r == CompassListener.ERROR_FAILED_TO_START) {
-                        return new PluginResult(PluginResult.Status.IO_EXCEPTION, CompassListener.ERROR_FAILED_TO_START);
-                    }
-                    // Wait until running
-                    long timeout = 2000;
-                    while ((this.status == STARTING) && (timeout > 0)) {
-                        timeout = timeout - 100;
-                        try {
-                            Thread.sleep(100);
-                        } catch (InterruptedException e) {
-                            e.printStackTrace();
-                        }
-                    }
-                    if (timeout == 0) {
-                        return new PluginResult(PluginResult.Status.IO_EXCEPTION, CompassListener.ERROR_FAILED_TO_START);
-                    }
-                }
-                return new PluginResult(status, getCompassHeading());
-            }
-            else if (action.equals("setTimeout")) {
-                this.setTimeout(args.getLong(0));
-            }
-            else if (action.equals("getTimeout")) {
-                long l = this.getTimeout();
-                return new PluginResult(status, l);
-            } else {
-                // Unsupported action
-                return new PluginResult(PluginResult.Status.INVALID_ACTION);
-            }
-            return new PluginResult(status, result);
-        } catch (JSONException e) {
-            e.printStackTrace();
-            return new PluginResult(PluginResult.Status.JSON_EXCEPTION);
+    public boolean execute(String action, JSONArray args, CallbackContext callbackContext) throws JSONException {
+        if (action.equals("start")) {
+            this.start();
         }
-    }
-
-    /**
-     * Identifies if action to be executed returns a value and should be run synchronously.
-     *
-     * @param action    The action to execute
-     * @return          T=returns value
-     */
-    public boolean isSynch(String action) {
-        if (action.equals("getStatus")) {
-            return true;
+        else if (action.equals("stop")) {
+            this.stop();
+        }
+        else if (action.equals("getStatus")) {
+            int i = this.getStatus();
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, i));
         }
         else if (action.equals("getHeading")) {
-            // Can only return value if RUNNING
-            if (this.status == CompassListener.RUNNING) {
-                return true;
+            // If not running, then this is an async call, so don't worry about waiting
+            if (this.status != CompassListener.RUNNING) {
+                int r = this.start();
+                if (r == CompassListener.ERROR_FAILED_TO_START) {
+                    callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.IO_EXCEPTION, CompassListener.ERROR_FAILED_TO_START));
+                    return true;
+                }
+                // Set a timeout callback on the main thread.
+                Handler handler = new Handler(Looper.getMainLooper());
+                handler.postDelayed(new Runnable() {
+                    public void run() {
+                        CompassListener.this.timeout();
+                    }
+                }, 2000);
             }
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, getCompassHeading()));
+        }
+        else if (action.equals("setTimeout")) {
+            this.setTimeout(args.getLong(0));
         }
         else if (action.equals("getTimeout")) {
-            return true;
+            long l = this.getTimeout();
+            callbackContext.sendPluginResult(new PluginResult(PluginResult.Status.OK, l));
+        } else {
+            // Unsupported action
+            return false;
         }
-        return false;
+        return true;
     }
 
     /**
@@ -223,6 +194,18 @@ public class CompassListener extends Plugin implements SensorEventListener {
 
     public void onAccuracyChanged(Sensor sensor, int accuracy) {
         // TODO Auto-generated method stub
+    }
+
+    /**
+     * Called after a delay to time out if the listener has not attached fast enough.
+     */
+    private void timeout() {
+        if (this.status == CompassListener.STARTING) {
+            this.setStatus(CompassListener.ERROR_FAILED_TO_START);
+            if (this.callbackContext != null) {
+                this.callbackContext.error("Compass listener failed to start.");
+            }
+        }
     }
 
     /**
@@ -296,19 +279,15 @@ public class CompassListener extends Plugin implements SensorEventListener {
      *
      * @return a compass heading
      */
-    private JSONObject getCompassHeading() {
+    private JSONObject getCompassHeading() throws JSONException {
         JSONObject obj = new JSONObject();
 
-        try {
-            obj.put("magneticHeading", this.getHeading());
-            obj.put("trueHeading", this.getHeading());
-            // Since the magnetic and true heading are always the same our and accuracy
-            // is defined as the difference between true and magnetic always return zero
-            obj.put("headingAccuracy", 0);
-            obj.put("timestamp", this.timeStamp);
-        } catch (JSONException e) {
-            // Should never happen
-        }
+        obj.put("magneticHeading", this.getHeading());
+        obj.put("trueHeading", this.getHeading());
+        // Since the magnetic and true heading are always the same our and accuracy
+        // is defined as the difference between true and magnetic always return zero
+        obj.put("headingAccuracy", 0);
+        obj.put("timestamp", this.timeStamp);
 
         return obj;
     }

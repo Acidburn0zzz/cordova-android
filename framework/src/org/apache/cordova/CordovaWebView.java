@@ -31,30 +31,33 @@ import org.apache.cordova.api.CordovaInterface;
 import org.apache.cordova.api.LOG;
 import org.apache.cordova.api.PluginManager;
 import org.apache.cordova.api.PluginResult;
-import org.json.JSONException;
 import org.xmlpull.v1.XmlPullParserException;
 
 import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
+import android.app.Activity;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.XmlResourceParser;
-import android.net.ConnectivityManager;
-import android.net.NetworkInfo;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.util.AttributeSet;
 import android.util.Log;
+import android.view.Gravity;
 import android.view.KeyEvent;
+import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebHistoryItem;
+import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebSettings.LayoutAlgorithm;
+import android.widget.FrameLayout;
 
 public class CordovaWebView extends WebView {
 
@@ -83,22 +86,30 @@ public class CordovaWebView extends WebView {
     String baseUrl;
     private Stack<String> urls = new Stack<String>();
 
-    boolean useBrowserHistory = false;
+    boolean useBrowserHistory = true;
 
     // Flag to track that a loadUrl timeout occurred
     int loadUrlTimeout = 0;
 
     private boolean bound;
 
-    private boolean volumedownBound;
-
-    private boolean volumeupBound;
-
     private boolean handleButton = false;
+    
+    private long lastMenuEventTime = 0;
 
 	NativeToJsMessageQueue jsMessageQueue;
 	ExposedJsApi exposedJsApi;
 
+    /** custom view created by the browser (a video player for example) */
+    private View mCustomView;
+    private WebChromeClient.CustomViewCallback mCustomViewCallback;
+    
+    static final FrameLayout.LayoutParams COVER_SCREEN_GRAVITY_CENTER =
+            new FrameLayout.LayoutParams(
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            ViewGroup.LayoutParams.MATCH_PARENT,
+            Gravity.CENTER);
+    
     /**
      * Constructor.
      *
@@ -159,7 +170,6 @@ public class CordovaWebView extends WebView {
             Log.d(TAG, "Your activity must implement CordovaInterface to work");
         }
         this.setWebChromeClient(new CordovaChromeClient(this.cordova, this));
-        this.initWebViewClient(this.cordova);
         this.loadConfiguration();
         this.setup();
     }
@@ -191,7 +201,7 @@ public class CordovaWebView extends WebView {
 
 
     private void initWebViewClient(CordovaInterface cordova) {
-        if(android.os.Build.VERSION.SDK_INT > android.os.Build.VERSION_CODES.HONEYCOMB)
+        if(android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.HONEYCOMB)
         {
             this.setWebViewClient(new CordovaWebViewClient(this.cordova, this));
         }
@@ -264,8 +274,14 @@ public class CordovaWebView extends WebView {
     }
 
     private void exposeJsInterface() {
-        // addJavascriptInterface crashes on the 2.3 emulator.
-        if (Build.VERSION.RELEASE.startsWith("2.3") && Build.MANUFACTURER.equals("unknown")) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.GINGERBREAD) {
+            Log.i(TAG, "Disabled addJavascriptInterface() bridge since Android version is old.");
+            // Bug being that Java Strings do not get converted to JS strings automatically.
+            // This isn't hard to work-around on the JS side, but it's easier to just
+            // use the prompt bridge instead.
+            return;            
+        } else if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB && Build.MANUFACTURER.equals("unknown")) {
+            // addJavascriptInterface crashes on the 2.3 emulator.
             Log.i(TAG, "Disabled addJavascriptInterface() bridge callback due to a bug on the 2.3 emulator");
             return;
         }
@@ -577,6 +593,7 @@ public class CordovaWebView extends WebView {
         if (super.canGoBack()) {
         	printBackForwardList();
             super.goBack();
+            
             return true;
         }
 
@@ -672,6 +689,12 @@ public class CordovaWebView extends WebView {
      *      <log level="DEBUG" />
      */
     private void loadConfiguration() {
+        Activity action = this.cordova.getActivity();
+        if(action == null)
+        {
+            LOG.i("CordovaLog", "There is no activity.  Is this on the lock screen?");
+            return;
+        }
         int id = getResources().getIdentifier("config", "xml", this.cordova.getActivity().getPackageName());
         if(id == 0)
         {
@@ -721,14 +744,13 @@ public class CordovaWebView extends WebView {
             }
         }
 
-        // Init preferences
-        if ("true".equals(this.getProperty("useBrowserHistory", "false"))) {
-            this.useBrowserHistory = true;
-        }
-        else {
+        if("false".equals(this.getProperty("useBrowserHistory", "true")))
+        {
+            //Switch back to the old browser history and state the six month policy
             this.useBrowserHistory = false;
+            Log.w(TAG, "useBrowserHistory=false is deprecated as of Cordova 2.2.0 and will be removed six months after the 2.2.0 release.  Please use the browser history and use history.back().");
         }
-
+ 
         if ("true".equals(this.getProperty("fullscreen", "false"))) {
             this.cordova.getActivity().getWindow().clearFlags(WindowManager.LayoutParams.FLAG_FORCE_NOT_FULLSCREEN);
             this.cordova.getActivity().getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
@@ -779,6 +801,17 @@ public class CordovaWebView extends WebView {
                 return super.onKeyDown(keyCode, event);
             }
         }
+        else if(keyCode == KeyEvent.KEYCODE_BACK)
+        {
+            //Because exit is fired on the keyDown and not the key up on Android 4.x
+            //we need to check for this.
+            //Also, I really wished "canGoBack" worked!
+            if(this.useBrowserHistory)
+                return !(this.startOfHistory()) || this.bound;
+            else
+                return this.urls.size() > 1 || this.bound;
+        }
+        
         return super.onKeyDown(keyCode, event);
     }
     
@@ -788,26 +821,35 @@ public class CordovaWebView extends WebView {
     {
         // If back key
         if (keyCode == KeyEvent.KEYCODE_BACK) {
-            // If back key is bound, then send event to JavaScript
-            if (this.bound) {
-                this.loadUrl("javascript:cordova.fireDocumentEvent('backbutton');");
-                return true;
-            } else {
-                // If not bound
-                // Go to previous page in webview if it is possible to go back
-                if (this.backHistory()) {
-                    return true;
-                }
-                // If not, then invoke default behavior
-                else {
-                    //this.activityState = ACTIVITY_EXITING;
-                    return false;
-                }
-            }
+            // A custom view is currently displayed  (e.g. playing a video)
+        	if(mCustomView != null) {
+        		this.hideCustomView();
+        	} else {
+        	    // The webview is currently displayed
+	            // If back key is bound, then send event to JavaScript
+	            if (this.bound) {
+	                this.loadUrl("javascript:cordova.fireDocumentEvent('backbutton');");
+	                return true;
+	            } else {
+	                // If not bound
+	                // Go to previous page in webview if it is possible to go back
+	                if (this.backHistory()) {
+	                    return true;
+	                }
+	                // If not, then invoke default behaviour
+	                else {
+	                    //this.activityState = ACTIVITY_EXITING;
+	                    return false;
+	                }
+	            }
+        	}
         }
         // Legacy
         else if (keyCode == KeyEvent.KEYCODE_MENU) {
-            this.loadUrl("javascript:cordova.fireDocumentEvent('menubutton');");
+            if (this.lastMenuEventTime < event.getEventTime()) {
+                this.loadUrl("javascript:cordova.fireDocumentEvent('menubutton');");
+            }
+            this.lastMenuEventTime = event.getEventTime();
             return super.onKeyUp(keyCode, event);
         }
         // If search key
@@ -942,8 +984,6 @@ public class CordovaWebView extends WebView {
         }
     }
     
-    
-    
     public void printBackForwardList() {
     	WebBackForwardList currentList = this.copyBackForwardList();
     	int currentSize = currentList.getSize();
@@ -954,4 +994,70 @@ public class CordovaWebView extends WebView {
     		LOG.d(TAG, "The URL at index: " + Integer.toString(i) + "is " + url );
     	}
     }
+    
+    
+    //Can Go Back is BROKEN!
+    public boolean startOfHistory()
+    {
+        WebBackForwardList currentList = this.copyBackForwardList();
+        WebHistoryItem item = currentList.getItemAtIndex(0);
+        String url = item.getUrl();
+        String currentUrl = this.getUrl();
+        LOG.d(TAG, "The current URL is: " + currentUrl);
+        LOG.d(TAG, "The URL at item 0 is:" + url);
+        return currentUrl.equals(url);
+    }
+
+    public void showCustomView(View view, WebChromeClient.CustomViewCallback callback) {
+    	// This code is adapted from the original Android Browser code, licensed under the Apache License, Version 2.0
+    	Log.d(TAG, "showing Custom View");
+        // if a view already exists then immediately terminate the new one
+        if (mCustomView != null) {
+            callback.onCustomViewHidden();
+            return;
+        }
+        
+        // Store the view and its callback for later (to kill it properly)
+    	mCustomView = view;
+    	mCustomViewCallback = callback;
+    	
+        // Add the custom view to its container.
+    	ViewGroup parent = (ViewGroup) this.getParent();
+    	parent.addView(view, COVER_SCREEN_GRAVITY_CENTER);
+    	
+    	// Hide the content view.
+    	this.setVisibility(View.GONE);
+    	
+    	// Finally show the custom view container.
+    	parent.setVisibility(View.VISIBLE);
+    	parent.bringToFront();
+    }
+
+	public void hideCustomView() {
+    	// This code is adapted from the original Android Browser code, licensed under the Apache License, Version 2.0
+    	Log.d(TAG, "Hidding Custom View");
+		if (mCustomView == null) return;
+
+		// Hide the custom view.
+		mCustomView.setVisibility(View.GONE);
+		
+		// Remove the custom view from its container.
+		ViewGroup parent = (ViewGroup) this.getParent();
+		parent.removeView(mCustomView);
+		mCustomView = null;
+		mCustomViewCallback.onCustomViewHidden();
+		
+        // Show the content view.
+        this.setVisibility(View.VISIBLE);
+	}
+	
+	/**
+	 * if the video overlay is showing then we need to know 
+	 * as it effects back button handling
+	 * 
+	 * @return
+	 */
+	public boolean isCustomViewShowing() {
+	    return mCustomView != null;
+	}
 }

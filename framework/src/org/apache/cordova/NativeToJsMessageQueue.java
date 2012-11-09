@@ -50,8 +50,13 @@ public class NativeToJsMessageQueue {
     // exec() is asynchronous. Set this to true when running bridge benchmarks.
     static final boolean DISABLE_EXEC_CHAINING = false;
     
-    // Arbitrarily chosen upper limit for how much data to send to JS in one shot. 
-    private static final int MAX_PAYLOAD_SIZE = 50 * 1024;
+    // Upper limit for how much data to send to JS in one shot.
+    // TODO(agrieve): This is currently disable. It should be re-enabled once we
+    // remove support for returning values from exec() calls. This was
+    // deprecated in 2.2.0.
+    // Also, this currently only chops up on message boundaries. It may be useful
+    // to allow it to break up messages.
+    private static int MAX_PAYLOAD_SIZE = -1; //50 * 1024 * 10240;
     
     /**
      * The index into registeredListeners to treat as active. 
@@ -144,7 +149,7 @@ public class NativeToJsMessageQueue {
             int numMessagesToSend = 0;
             for (JsMessage message : queue) {
                 int messageSize = calculatePackedMessageLength(message);
-                if (numMessagesToSend > 0 && totalPayloadLen + messageSize > MAX_PAYLOAD_SIZE) {
+                if (numMessagesToSend > 0 && totalPayloadLen + messageSize > MAX_PAYLOAD_SIZE && MAX_PAYLOAD_SIZE > 0) {
                     break;
                 }
                 totalPayloadLen += messageSize;
@@ -178,7 +183,7 @@ public class NativeToJsMessageQueue {
             int numMessagesToSend = 0;
             for (JsMessage message : queue) {
                 int messageSize = message.calculateEncodedLength() + 50; // overestimate.
-                if (numMessagesToSend > 0 && totalPayloadLen + messageSize > MAX_PAYLOAD_SIZE) {
+                if (numMessagesToSend > 0 && totalPayloadLen + messageSize > MAX_PAYLOAD_SIZE && MAX_PAYLOAD_SIZE > 0) {
                     break;
                 }
                 totalPayloadLen += messageSize;
@@ -392,7 +397,8 @@ public class NativeToJsMessageQueue {
             int statusLen = String.valueOf(pluginResult.getStatus()).length();
             int ret = 2 + statusLen + 1 + jsPayloadOrCallbackId.length() + 1;
             switch (pluginResult.getMessageType()) {
-                case PluginResult.MESSAGE_TYPE_BOOLEAN:
+                case PluginResult.MESSAGE_TYPE_BOOLEAN: // f or t
+                case PluginResult.MESSAGE_TYPE_NULL: // N
                     ret += 1;
                     break;
                 case PluginResult.MESSAGE_TYPE_NUMBER: // n
@@ -429,13 +435,16 @@ public class NativeToJsMessageQueue {
                 case PluginResult.MESSAGE_TYPE_BOOLEAN:
                     sb.append(pluginResult.getMessage().charAt(0)); // t or f.
                     break;
+                case PluginResult.MESSAGE_TYPE_NULL: // N
+                    sb.append('N');
+                    break;
                 case PluginResult.MESSAGE_TYPE_NUMBER: // n
                     sb.append('n')
                       .append(pluginResult.getMessage());
                     break;
                 case PluginResult.MESSAGE_TYPE_STRING: // s
-                    sb.append('s')
-                      .append(pluginResult.getStrMessage());
+                    sb.append('s');
+                    sb.append(pluginResult.getStrMessage());
                     break;
                 case PluginResult.MESSAGE_TYPE_JSON:
                 default:
