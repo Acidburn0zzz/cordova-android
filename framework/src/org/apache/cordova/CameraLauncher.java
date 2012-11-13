@@ -267,6 +267,17 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
                     if (destType == DATA_URL) {
                         Log.d(LOG_TAG, "it's a data url");
                         bitmap = getScaledBitmap(FileUtils.stripFileProtocol(imageUri.toString()));
+                        if (bitmap == null) {
+                            // Try to get the bitmap from intent.
+                            bitmap = (Bitmap)intent.getExtras().get("data");
+                        }
+                        
+                        // Double-check the bitmap.
+                        if (bitmap == null) {
+                            Log.d(LOG_TAG, "I either have a null image path or bitmap");
+                            this.failPicture("Unable to create bitmap!");
+                            return;
+                        }
 
                         if (rotate != 0 && this.correctOrientation) {
                             bitmap = getRotatedBitmap(rotate, bitmap, exif);
@@ -555,6 +566,9 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
         options.inJustDecodeBounds = false;
         options.inSampleSize = calculateSampleSize(options.outWidth, options.outHeight, this.targetWidth, this.targetHeight);
         Bitmap unscaledBitmap = BitmapFactory.decodeFile(imagePath, options);
+        if (unscaledBitmap == null) {
+            return null;
+        }
 
         return Bitmap.createScaledBitmap(unscaledBitmap, widthHeight[0], widthHeight[1], true);
     }
