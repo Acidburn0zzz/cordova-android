@@ -257,7 +257,8 @@ public class CameraActivity extends Activity {
         }
         
         // Recycle the image and send the result back
-        previewImage.recycle();
+        if(previewImage != null)
+            previewImage.recycle();
         setResult(RESULT_OK);
         finish();
     }
