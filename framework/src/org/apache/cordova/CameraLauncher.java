@@ -529,28 +529,7 @@ public class CameraLauncher extends CordovaPlugin implements MediaScannerConnect
         return uri;
     }
 
-    /**
-     * Compress bitmap using jpeg, convert to Base64 encoded string, and return to JavaScript.
-     *
-     * @param bitmap
-     */
-    public void processPicture(Bitmap bitmap) {
-        ByteArrayOutputStream jpeg_data = new ByteArrayOutputStream();
-        try {
-            if (bitmap.compress(CompressFormat.JPEG, mQuality, jpeg_data)) {
-                byte[] code = jpeg_data.toByteArray();
-                byte[] output = Base64.encodeBase64(code);
-                String js_out = new String(output);
-                this.success(new PluginResult(PluginResult.Status.OK, js_out), this.callbackId);
-                js_out = null;
-                output = null;
-                code = null;
-            }
-        } catch (Exception e) {
-            this.failPicture("Error compressing image.");
-        }
-        jpeg_data = null;
-    }
+    
 
     /**
      * Return a scaled bitmap based on the target width and height
