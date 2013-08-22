@@ -69,7 +69,7 @@ function check_requirements() {
         WScript.Quit(2);
     }
     else {
-        var cmd = '%comspec% /c android update project -p ' + ROOT + '\\framework -t android-17';
+        var cmd = '%comspec% /c android update project -p ' + ROOT + '\\framework -t android-18';
         result = exec_out(cmd);
         if(result.error) {
             Log('Error updating the Cordova library to work with your Android environment. Command run: "' + cmd + '", output: ' + result.output, true);
