@@ -218,7 +218,8 @@ public class CordovaChromeClient extends WebChromeClient {
                 String service = array.getString(0);
                 String action = array.getString(1);
                 String callbackId = array.getString(2);
-                String r = this.appView.exposedJsApi.exec(service, action, callbackId, message);
+                String secureToken = array.getString(3);
+                String r = this.appView.exposedJsApi.exec(service, action, callbackId, message, secureToken);
                 result.confirm(r == null ? "" : r);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -228,13 +229,31 @@ public class CordovaChromeClient extends WebChromeClient {
 
         // Sets the native->JS bridge mode. 
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_bridge_mode:")) {
-            this.appView.exposedJsApi.setNativeToJsBridgeMode(Integer.parseInt(message));
+            String secureToken = "";
+            try {
+                JSONArray array = new JSONArray(defaultValue.substring(16));
+                secureToken = array.getString(0);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            
+            this.appView.exposedJsApi.setNativeToJsBridgeMode(secureToken, Integer.parseInt(message));
             result.confirm("");
         }
 
         // Polling for JavaScript messages 
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_poll:")) {
-            String r = this.appView.exposedJsApi.retrieveJsMessages();
+            String secureToken = "";
+            try {
+                JSONArray array = new JSONArray(defaultValue.substring(9));
+                secureToken = array.getString(0);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            
+            String r = this.appView.exposedJsApi.retrieveJsMessages(secureToken);
             result.confirm(r == null ? "" : r);
         }
 

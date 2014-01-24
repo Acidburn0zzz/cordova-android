@@ -91,25 +91,28 @@ public class AccelListener extends CordovaPlugin implements SensorEventListener 
      * @return              Whether the action was valid.
      */
     public boolean execute(String action, JSONArray args, CallbackContext callbackContext) {
+        PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT, "");
+        
         if (action.equals("start")) {
             this.callbackContext = callbackContext;
             if (this.status != AccelListener.RUNNING) {
                 // If not running, then this is an async call, so don't worry about waiting
                 // We drop the callback onto our stack, call start, and let start and the sensor callback fire off the callback down the road
                 this.start();
+                result.setKeepCallback(true);
             }
         }
         else if (action.equals("stop")) {
             if (this.status == AccelListener.RUNNING) {
                 this.stop();
+                result.setKeepCallback(false);
             }
         } else {
           // Unsupported action
             return false;
         }
 
-        PluginResult result = new PluginResult(PluginResult.Status.NO_RESULT, "");
-        result.setKeepCallback(true);
+        //result.setKeepCallback(true);
         callbackContext.sendPluginResult(result);
         return true;
     }

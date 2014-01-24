@@ -126,7 +126,7 @@ public class NetworkManager extends CordovaPlugin {
             this.connectionCallbackContext = callbackContext;
             NetworkInfo info = sockMan.getActiveNetworkInfo();
             PluginResult pluginResult = new PluginResult(PluginResult.Status.OK, this.getConnectionInfo(info));
-            pluginResult.setKeepCallback(true);
+            pluginResult.setKeepCallback(false);
             callbackContext.sendPluginResult(pluginResult);
             return true;
         }

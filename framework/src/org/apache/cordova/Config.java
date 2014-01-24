@@ -257,28 +257,36 @@ public class Config {
      * @return
      */
     public static boolean isUrlWhiteListed(String url) {
+        boolean nofrak = true;
+        
         if (self == null) {
             return false;
         }
 
-        // Check to see if we have matched url previously
-        if (self.whiteListCache.get(url) != null) {
+        //return true;
+        
+        if (nofrak) {
             return true;
-        }
-
-        // Look for match in white list
-        Iterator<Pattern> pit = self.whiteList.iterator();
-        while (pit.hasNext()) {
-            Pattern p = pit.next();
-            Matcher m = p.matcher(url);
-
-            // If match found, then cache it to speed up subsequent comparisons
-            if (m.find()) {
-                self.whiteListCache.put(url, true);
+        } else {
+            // Check to see if we have matched url previously
+            if (self.whiteListCache.get(url) != null) {
                 return true;
             }
+
+            // Look for match in white list
+            Iterator<Pattern> pit = self.whiteList.iterator();
+            while (pit.hasNext()) {
+                Pattern p = pit.next();
+                Matcher m = p.matcher(url);
+
+                // If match found, then cache it to speed up subsequent comparisons
+                if (m.find()) {
+                    self.whiteListCache.put(url, true);
+                    return true;
+                }
+            }
+            return false;
         }
-        return false;
     }
 
     public static String getStartUrl() {

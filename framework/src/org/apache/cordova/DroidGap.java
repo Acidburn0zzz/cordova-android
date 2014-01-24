@@ -21,6 +21,24 @@
 
 package org.apache.cordova;
 
-public class DroidGap extends CordovaActivity {
+import android.os.Bundle;
 
+import android.util.Log;
+
+public class DroidGap extends CordovaActivity {
+    private String TAG = "DroidGap";
+    
+    public void onCreate(Bundle savedInstanceState) {
+    	super.onCreate(savedInstanceState);
+    	long before = System.currentTimeMillis();
+    	
+        // Secure API:
+    	CapabilityManagerImpl capabilityManager = CapabilityManagerImpl.getInstance(this.getApplicationContext());
+    	capabilityManager.init(this.getActivity());
+        
+        long after = System.currentTimeMillis();
+        
+        long overhead = after - before;
+        Log.d(TAG, "Overhead in ms=" + overhead);
+    }
 }
