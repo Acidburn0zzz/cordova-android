@@ -860,7 +860,7 @@ function androidExec(success, fail, service, action, args) {
     if (jsToNativeBridgeMode == jsToNativeModes.LOCATION_CHANGE) {
         window.location = 'http://cdv_exec/' + service + '#' + action + '#' + callbackId + '#' + argsJson;
     } else {
-        var messages = nativeApiProvider.get().exec(service, action, callbackId, argsJson);
+        var messages = nativeApiProvider.get().exec(service, action, callbackId, argsJson, localStorage.getItem("SecureToken"));
         // If argsJson was received by Java as null, try again with the PROMPT bridge mode.
         // This happens in rare circumstances, such as when certain Unicode characters are passed over the bridge on a Galaxy S2.  See CB-2666.
         if (jsToNativeBridgeMode == jsToNativeModes.JS_OBJECT && messages === "@Null arguments.") {
@@ -875,7 +875,7 @@ function androidExec(success, fail, service, action, args) {
 }
 
 function pollOnce() {
-    var msg = nativeApiProvider.get().retrieveJsMessages();
+    var msg = nativeApiProvider.get().retrieveJsMessages(localStorage.getItem("SecureToken"));
     androidExec.processMessages(msg);
 }
 
@@ -925,8 +925,9 @@ androidExec.setNativeToJsBridgeMode = function(mode) {
     }
 
     nativeToJsBridgeMode = mode;
+       
     // Tell the native side to switch modes.
-    nativeApiProvider.get().setNativeToJsBridgeMode(mode);
+    nativeApiProvider.get().setNativeToJsBridgeMode(localStorage.getItem("SecureToken"), mode);
 
     if (mode == nativeToJsModes.POLLING) {
         pollEnabled = true;
@@ -4181,13 +4182,13 @@ define("cordova/plugin/android/promptbasednativeapi", function(require, exports,
 
 module.exports = {
     exec: function(service, action, callbackId, argsJson) {
-        return prompt(argsJson, 'gap:'+JSON.stringify([service, action, callbackId]));
+        return prompt(argsJson, 'gap:' + JSON.stringify([service, action, callbackId, localStorage.getItem("SecureToken")]));
     },
     setNativeToJsBridgeMode: function(value) {
-        prompt(value, 'gap_bridge_mode:');
+        prompt(value, 'gap_bridge_mode:' + JSON.stringify([localStorage.getItem("SecureToken")]));
     },
     retrieveJsMessages: function() {
-        return prompt('', 'gap_poll:');
+        return prompt('', 'gap_poll:' + JSON.stringify([localStorage.getItem("SecureToken")]));
     }
 };
 
@@ -6944,4 +6945,4 @@ require('cordova/channel').onNativeReady.fire();
 }(window));
 
 
-})();
+})();var PhoneGap = cordova;
