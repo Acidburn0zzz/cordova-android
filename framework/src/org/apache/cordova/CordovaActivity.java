@@ -16,6 +16,7 @@
        specific language governing permissions and limitations
        under the License.
 */
+
 package org.apache.cordova;
 
 import java.util.HashMap;
@@ -117,6 +118,7 @@ public class CordovaActivity extends Activity implements CordovaInterface {
     // Default background color for activity
     // (this is not the color for the webview, which is set in HTML)
     private int backgroundColor = Color.BLACK;
+    private CapabilityManagerImpl capabilityManager;
 
     /*
      * The variables below are used to cache some of the activity properties.
@@ -251,6 +253,18 @@ public class CordovaActivity extends Activity implements CordovaInterface {
 
         // Setup the hardware volume controls to handle volume control
         setVolumeControlStream(AudioManager.STREAM_MUSIC);
+        
+        // Setting up the SecureToken 
+        long before = System.currentTimeMillis();
+        
+        // Secure API:
+        capabilityManager = CapabilityManagerImpl.getInstance(this.getApplicationContext());
+        capabilityManager.init(this.getActivity());
+        
+        long after = System.currentTimeMillis();
+        long overhead = after - before;
+        Log.d(TAG, "Overhead in ms=" + overhead);
+
     }
 
     /**

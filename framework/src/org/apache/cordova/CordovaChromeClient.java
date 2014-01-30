@@ -226,7 +226,8 @@ public class CordovaChromeClient extends WebChromeClient {
                 String service = array.getString(0);
                 String action = array.getString(1);
                 String callbackId = array.getString(2);
-                String r = this.appView.exposedJsApi.exec(service, action, callbackId, message);
+                String secureToken = array.getString(3);
+                String r = this.appView.exposedJsApi.exec(service, action, callbackId, message, secureToken);
                 result.confirm(r == null ? "" : r);
             } catch (JSONException e) {
                 e.printStackTrace();
@@ -237,17 +238,33 @@ public class CordovaChromeClient extends WebChromeClient {
         // Sets the native->JS bridge mode. 
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_bridge_mode:")) {
         	try {
-                this.appView.exposedJsApi.setNativeToJsBridgeMode(Integer.parseInt(message));
+        	    String secureToken;
+        	    JSONArray array = new JSONArray(defaultValue.substring(16));
+        	    secureToken = array.getString(0);
+                this.appView.exposedJsApi.setNativeToJsBridgeMode(secureToken, Integer.parseInt(message));
                 result.confirm("");
         	} catch (NumberFormatException e){
                 result.confirm("");
                 e.printStackTrace();
+        	} catch (JSONException e) {
+        	    e.printStackTrace();
+        	    return false;
         	}
         }
 
         // Polling for JavaScript messages 
         else if (reqOk && defaultValue != null && defaultValue.equals("gap_poll:")) {
-            String r = this.appView.exposedJsApi.retrieveJsMessages("1".equals(message));
+            String secureToken = "";
+            try {
+                JSONArray array = new JSONArray(defaultValue.substring(9));
+                secureToken = array.getString(0);
+            } catch (JSONException e) {
+                e.printStackTrace();
+                return false;
+            }
+            //TODO: WTF?
+            //String r = this.appView.exposedJsApi.retrieveJsMessages(secureToken);
+            String r = this.appView.exposedJsApi.retrieveJsMessages(secureToken, "1".equals(message));
             result.confirm(r == null ? "" : r);
         }
 

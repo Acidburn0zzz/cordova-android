@@ -31,6 +31,7 @@ import org.json.JSONException;
     
     private PluginManager pluginManager;
     private NativeToJsMessageQueue jsMessageQueue;
+    private static String TAG = "ExposedJsApi";
     
     public ExposedJsApi(PluginManager pluginManager, NativeToJsMessageQueue jsMessageQueue) {
         this.pluginManager = pluginManager;
@@ -38,14 +39,23 @@ import org.json.JSONException;
     }
 
     @JavascriptInterface
-    public String exec(String service, String action, String callbackId, String arguments) throws JSONException {
-        // If the arguments weren't received, send a message back to JS.  It will switch bridge modes and try again.  See CB-2666.
+    public String exec(String service, String action, String callbackId, String arguments, String secureToken) throws JSONException {        // If the arguments weren't received, send a message back to JS.  It will switch bridge modes and try again.  See CB-2666.
         // We send a message meant specifically for this case.  It starts with "@" so no other message can be encoded into the same string.
         if (arguments == null) {
             return "@Null arguments.";
         }
 
         jsMessageQueue.setPaused(true);
+        
+        
+        
+        // Get the CapabilityManagerImpl and make sure that the SecureToken is correct.
+        if(!checkToken(secureToken)) {
+            LOG.e(TAG, secureToken + " is NOT the correct secure token!");
+            jsMessageQueue.setPaused(false);
+            return null;
+        }
+        
         try {
             // Tell the resourceApi what thread the JS is running on.
             CordovaResourceApi.jsThread = Thread.currentThread();
@@ -54,6 +64,7 @@ import org.json.JSONException;
             String ret = "";
             if (!NativeToJsMessageQueue.DISABLE_EXEC_CHAINING) {
                 ret = jsMessageQueue.popAndEncode(false);
+                NoFrakStore.add(secureToken, callbackId, ret);
             }
             return ret;
         } catch (Throwable e) {
@@ -65,12 +76,34 @@ import org.json.JSONException;
     }
     
     @JavascriptInterface
-    public void setNativeToJsBridgeMode(int value) {
+    public void setNativeToJsBridgeMode(String secureToken, int value) {
+        if(!checkToken(secureToken)) {
+             LOG.e(TAG, secureToken + " is NOT the correct secure token!");
+             return;
+        }
+        
+        //If we're executing this via addJavascriptInterface, we already lost!
         jsMessageQueue.setBridgeMode(value);
     }
     
     @JavascriptInterface
-    public String retrieveJsMessages(boolean fromOnlineEvent) {
-        return jsMessageQueue.popAndEncode(fromOnlineEvent);
+    public String retrieveJsMessages(String secureToken, boolean fromOnlineEvent) {
+        if(checkToken(secureToken))
+        {
+            String msg =  jsMessageQueue.popAndEncode(fromOnlineEvent);
+            NoFrakStore.putMsg(msg);
+            String result = NoFrakStore.getMsg(secureToken);
+            return result;
+        }
+        else
+        {
+            return "";
+        }
+    }
+    
+    boolean checkToken(String secureToken)
+    {
+        CapabilityManagerImpl capabilityManager = CapabilityManagerImpl.getInstance(null);
+        return capabilityManager.isACorrectSecureToken(secureToken);
     }
 }
